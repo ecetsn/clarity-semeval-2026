@@ -1,0 +1,6 @@
+models:
+  - experiments/results_dev/clarity/checkpoint-best
+  - experiments/results_dev/evasion/checkpoint-best
+  - experiments/results_dev/encoder_roberta
+fusion_method: logistic_regression
+metric: macro_f1

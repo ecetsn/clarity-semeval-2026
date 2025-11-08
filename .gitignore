@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.ipynb_checkpoints
+.env
+.venv
+bmvenv/
+*.egg-info/
+wandb/
+mlruns/
+
+# Data
+data/cache/
+data/processed/
+*.csv
+*.json
+*.parquet
+
+# Models
+checkpoints/
+outputs/
+*.bin
+*.pt
+*.safetensors
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+
+# OS
+.DS_Store

@@ -1,0 +1,21 @@
+task_name: clarity
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+train_file: data/processed/train_clarity.json
+eval_file: data/processed/dev_clarity.json
+output_dir: experiments/results_dev/clarity
+max_seq_length: 2048
+learning_rate: 2e-5
+batch_size: 4
+num_train_epochs: 3
+gradient_accumulation_steps: 2
+weight_decay: 0.01
+warmup_ratio: 0.1
+save_total_limit: 2
+evaluation_strategy: epoch
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+use_evasion_logits: true
+dual_pass: true
+entity_scrub_mix_prob: 0.3

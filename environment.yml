@@ -1,0 +1,11 @@
+name: clarity
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch
+  - cudatoolkit
+  - pip
+  - pip:
+      - -r requirements.txt
