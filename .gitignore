@@ -14,6 +14,7 @@ mlruns/
 
 # Data
 data/cache/
+data/raw/
 data/processed/
 *.csv
 *.json
