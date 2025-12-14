@@ -1,21 +1,54 @@
-task_name: clarity
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-train_file: data/processed/train_clarity.json
-eval_file: data/processed/dev_clarity.json
-output_dir: experiments/results_dev/clarity
-max_seq_length: 2048
-learning_rate: 2e-5
-batch_size: 4
-num_train_epochs: 3
-gradient_accumulation_steps: 2
-weight_decay: 0.01
-warmup_ratio: 0.1
-save_total_limit: 2
-evaluation_strategy: epoch
-lora:
-  r: 16
-  alpha: 32
-  dropout: 0.05
-use_evasion_logits: true
-dual_pass: true
-entity_scrub_mix_prob: 0.3
+dataset:
+  dataset_name: ailsntua/QEvasion
+  label_column: clarity_label
+  text_column: interview_answer
+  question_column: question
+  validation_size: 0.2
+  random_seed: 21
+  calibration_fraction: 0.2
+  max_train_samples: null
+  max_val_samples: null
+  max_test_samples: null
+
+base_models:
+  - name: tfidf_baseline
+    type: tfidf_logreg
+    params:
+      ngram_range: [1, 2]
+      max_features: 20000
+      c: 2.5
+  - name: openrouter_embedder
+    type: openrouter_logreg
+    params:
+      model_name: text-embedding-3-large
+      batch_size: 6
+      c: 1.2
+  - name: openrouter_qwen8b
+    type: openrouter_logreg
+    params:
+      model_name: Qwen/Qwen3-Embedding-8B
+      batch_size: 4
+      c: 1.2
+  # - name: zero_shot_bart
+  #   type: zero_shot
+  #   params:
+  #     model_name: facebook/bart-large-mnli
+  #     batch_size: 4
+
+fusion:
+  type: logistic_regression
+  params:
+    C: 2.0
+    max_iter: 800
+
+output_dir: experiments
+
+paper_reference:
+  description: "Llama-2-70b (evasion-based clarity) from Thomas et al., 2024"
+  source: semval_2026_task6.pdf
+  metrics:
+    accuracy: 0.713
+    precision: 0.743
+    recall: 0.713
+    macro_f1: 0.720
+    weighted_f1: 0.752

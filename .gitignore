@@ -11,6 +11,7 @@ bmvenv/
 *.egg-info/
 wandb/
 mlruns/
+env
 
 # Data
 data/cache/
@@ -32,3 +33,6 @@ notebooks/.ipynb_checkpoints/
 
 # OS
 .DS_Store
+
+CS445___Milestone_2.pdf
+semval_2026_task6.pdf

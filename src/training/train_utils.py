@@ -1,11 +1,24 @@
-def run_lora_training(cfg):
-    from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
-    from peft import LoraConfig, get_peft_model
-    from datasets import load_dataset
-    print(f"Starting LoRA fine-tuning for {cfg['task_name']}...")
-    # This is a placeholder for your actual LoRA + dataset loading pipeline.
-    # Replace with actual training logic.
-    print("Loaded model:", cfg["model_name_or_path"])
-    print("Using LoRA params:", cfg["lora"])
-    print("Training files:", cfg["train_file"])
-    print("Output dir:", cfg["output_dir"])
+from __future__ import annotations
+
+from typing import Dict
+import warnings
+
+from src.evaluation.late_fusion import LateFusionExperiment
+
+# Suppress noisy sklearn FutureWarnings about multi_class deprecation.
+warnings.filterwarnings(
+    "ignore",
+    message=".*'multi_class' was deprecated.*",
+    category=FutureWarning,
+)
+
+
+def run_fusion_training(cfg: Dict) -> Dict:
+    """Executes the late-fusion training pipeline defined in the config file."""
+    experiment = LateFusionExperiment(cfg)
+    return experiment.run()
+
+
+def run_late_fusion_pipeline(cfg: Dict) -> Dict:
+    """Backward-compatible alias for run_fusion_training."""
+    return run_fusion_training(cfg)
