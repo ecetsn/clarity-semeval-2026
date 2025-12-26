@@ -5,7 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="updates">
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/data/qev_datamodule.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/decoders/base_decoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/decoders/gpt2_decoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/encoders/base_encoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/encoders/distilbert_encoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/confusion_matrix.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/evaluator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/metrics.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/fusion/concat_fusion.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/models/fusion_model.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/projections/mlp_projection.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/scripts/.gitkeep" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/scripts/inspect_dataset.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/training/train_baseline.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/decoder_sanity_check.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/encoder_OOP_sanity.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/encoder_sanity_check.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/fusion_sanity_check.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +75,15 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.analyze_baseline.executor": "Run",
+    "Python.decoder_OOP_sanity.executor": "Run",
+    "Python.decoder_sanity_check.executor": "Run",
+    "Python.encoder_OOP_sanity.executor": "Run",
+    "Python.encoder_sanity_check.executor": "Run",
+    "Python.fusion_sanity_check.executor": "Run",
+    "Python.inspect_dataset.executor": "Run",
     "Python.test.executor": "Run",
+    "Python.train_baseline.executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -74,8 +103,15 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager">
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\evaluation" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.train_baseline">
+    <configuration name="analyze_baseline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="clarity-semeval-2026" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -84,13 +120,109 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/training" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/training/analyze_baseline.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="decoder_OOP_sanity" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="clarity-semeval-2026" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="encoder_OOP_sanity" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="clarity-semeval-2026" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/encoder_OOP_sanity.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="fusion_sanity_check" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="clarity-semeval-2026" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/fusion_sanity_check.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="train_baseline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="clarity-semeval-2026" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/training" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/training/train_baseline.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -101,9 +233,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
-        <item itemvalue="Python.test" />
-        <item itemvalue="Python.test" />
+        <item itemvalue="Python.train_baseline" />
+        <item itemvalue="Python.analyze_baseline" />
+        <item itemvalue="Python.decoder_OOP_sanity" />
+        <item itemvalue="Python.encoder_OOP_sanity" />
+        <item itemvalue="Python.fusion_sanity_check" />
       </list>
     </recent_temporary>
   </component>
@@ -134,7 +268,15 @@
       <option name="project" value="LOCAL" />
       <updated>1766756342065</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="updates">
+      <option name="closed" value="true" />
+      <created>1766757851390</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1766757851390</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -145,6 +287,14 @@
     <option name="LAST_COMMIT_MESSAGE" value="updates" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$train_baseline.coverage" NAME="train_baseline Coverage Results" MODIFIED="1766785202414" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/training" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_OOP_sanity.coverage" NAME="decoder_OOP_sanity Coverage Results" MODIFIED="1766771721684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$encoder_OOP_sanity.coverage" NAME="encoder_OOP_sanity Coverage Results" MODIFIED="1766771679295" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$inspect_dataset.coverage" NAME="inspect_dataset Coverage Results" MODIFIED="1766765290001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/scripts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_sanity_check.coverage" NAME="decoder_sanity_check Coverage Results" MODIFIED="1766767905023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$analyze_baseline.coverage" NAME="analyze_baseline Coverage Results" MODIFIED="1766784683989" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/training" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$encoder_sanity_check.coverage" NAME="encoder_sanity_check Coverage Results" MODIFIED="1766767337481" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$fusion_sanity_check.coverage" NAME="fusion_sanity_check Coverage Results" MODIFIED="1766769074665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$test.coverage" NAME="test Coverage Results" MODIFIED="1766755892910" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
