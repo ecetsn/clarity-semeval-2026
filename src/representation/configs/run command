@@ -1,0 +1,1 @@
+python -m src.representation.training.train_from_yaml src/representation/configs/reproduced_baseline.yaml

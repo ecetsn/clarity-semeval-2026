@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -9,22 +10,22 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset
-
 from torch.amp import GradScaler, autocast
+from torch.utils.data import DataLoader, Dataset
 
 from src.representation.data.qev_datamodule import QEvasionDataModule
 from src.representation.decoders.gpt2_decoder import GPT2Decoder
 from src.representation.encoders.distilbert_encoder import DistilBERTEncoder
 from src.representation.evaluation.evaluator import evaluate_predictions
 from src.representation.models.fusion_model import RepresentationFusionModel
+from src.representation.logging.logger_setup import init_logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 
 # =========================================================
 # CONFIG
 # =========================================================
-
 @dataclass
 class TrainConfig:
     task: str = "clarity"  # "clarity" or "evasion"
@@ -54,16 +55,16 @@ class TrainConfig:
 
     # Outputs / logging
     output_dir: str = "experiments/representation/baseline"
-    use_wandb: bool = False
-    wandb_project: str = "clarity-semeval-2026"
-    wandb_run_name: str | None = None
 
 
 CFG = TrainConfig()
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+AMP_DEVICE_TYPE = "cuda" if DEVICE == "cuda" else "cpu"
 
 
+# =========================================================
 # DATASET WRAPPER
+# =========================================================
 class TextLabelDataset(Dataset):
     def __init__(self, texts: List[str], labels: List[int]) -> None:
         if len(texts) != len(labels):
@@ -74,12 +75,14 @@ class TextLabelDataset(Dataset):
     def __len__(self) -> int:
         return len(self.texts)
 
-    def __getitem__(self, idx: int) -> Tuple[str, int]:
+    def __getitem__(self, idx: int) -> Tuple[str, torch.Tensor]:
+        # Return tensor here so DataLoader stacks it cleanly
         return self.texts[idx], torch.tensor(self.labels[idx], dtype=torch.long)
 
 
-
+# =========================================================
 # UTILITIES
+# =========================================================
 def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -106,24 +109,6 @@ def build_label_mapping(labels: List[str]) -> Dict[str, int]:
     return {lbl: i for i, lbl in enumerate(uniq)}
 
 
-def maybe_init_wandb(cfg: TrainConfig) -> None:
-    if not cfg.use_wandb:
-        return
-    import wandb
-    wandb.init(
-        project=cfg.wandb_project,
-        name=cfg.wandb_run_name,
-        config=asdict(cfg),
-    )
-
-
-def maybe_wandb_log(cfg: TrainConfig, payload: Dict[str, float]) -> None:
-    if not cfg.use_wandb:
-        return
-    import wandb
-    wandb.log(payload)
-
-
 def maybe_freeze(m: torch.nn.Module) -> None:
     """
     Prefer the module's own freeze() if it exists; otherwise do generic freezing.
@@ -136,13 +121,10 @@ def maybe_freeze(m: torch.nn.Module) -> None:
         p.requires_grad = False
 
 
-def save_json(path: Path, payload: Dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(to_json_safe(payload), f, indent=2)
-
-
-def to_json_safe(obj):
+def to_json_safe(obj: Any) -> Any:
+    """
+    Recursively convert common non-JSON-serializable objects into safe Python types.
+    """
     if isinstance(obj, dict):
         return {k: to_json_safe(v) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -155,10 +137,21 @@ def to_json_safe(obj):
         return float(obj)
     if isinstance(obj, (np.int32, np.int64)):
         return int(obj)
+    # torch tensors
+    if torch.is_tensor(obj):
+        return obj.detach().cpu().tolist()
     return obj
 
 
+def save_json(path: Path, payload: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(to_json_safe(payload), f, indent=2)
+
+
+# =========================================================
 # TRAIN / EVAL
+# =========================================================
 def train_one_epoch(
     *,
     encoder: DistilBERTEncoder,
@@ -170,6 +163,7 @@ def train_one_epoch(
     scaler: GradScaler,
     epoch_idx: int,
     cfg: TrainConfig,
+    logger=None,  # OPTIONAL FIX: logger is optional
 ) -> float:
     fusion_model.train()
     total_loss = 0.0
@@ -178,7 +172,7 @@ def train_one_epoch(
     optimizer.zero_grad(set_to_none=True)
 
     for step_idx, (texts, labels) in enumerate(loader, start=1):
-        # labels are already ints (encoded), coming from TextLabelDataset
+        # labels should already be a tensor batch from the Dataset + DataLoader
         if isinstance(labels, torch.Tensor):
             y = labels.to(device=DEVICE, dtype=torch.long)
         else:
@@ -186,11 +180,11 @@ def train_one_epoch(
 
         # Frozen encoder/decoder forward (no grad)
         with torch.no_grad():
-            with autocast(device_type="cuda", enabled=(cfg.use_amp and DEVICE == "cuda")):
+            with autocast(device_type=AMP_DEVICE_TYPE, enabled=(cfg.use_amp and DEVICE == "cuda")):
                 enc_vec = encoder(list(texts))  # expected (B, 768)
                 dec_vec = decoder(list(texts))  # expected (B, 768)
 
-        with autocast(device_type="cuda", enabled=(cfg.use_amp and DEVICE == "cuda")):
+        with autocast(device_type=AMP_DEVICE_TYPE, enabled=(cfg.use_amp and DEVICE == "cuda")):
             logits = fusion_model(enc_vec, dec_vec)  # (B, C)
             loss = criterion(logits, y) / cfg.grad_accum_steps
 
@@ -209,10 +203,14 @@ def train_one_epoch(
         num_steps += 1
 
         if step_idx % 50 == 0:
-            print(
+            msg = (
                 f"[Epoch {epoch_idx}] step={step_idx}/{len(loader)} "
                 f"loss={total_loss / max(1, num_steps):.4f}"
             )
+            if logger is not None:
+                logger.info(msg)
+            else:
+                print(msg)
 
     return total_loss / max(1, num_steps)
 
@@ -233,9 +231,13 @@ def run_validation(
     y_pred_ids: List[int] = []
 
     for texts, labels in loader:
-        y_true_ids.extend([int(x) for x in labels])
+        # labels is a tensor batch
+        if isinstance(labels, torch.Tensor):
+            y_true_ids.extend(labels.detach().cpu().tolist())
+        else:
+            y_true_ids.extend([int(x) for x in labels])
 
-        with autocast(device_type="cuda", enabled=(cfg.use_amp and DEVICE == "cuda")):
+        with autocast(device_type=AMP_DEVICE_TYPE, enabled=(cfg.use_amp and DEVICE == "cuda")):
             enc_vec = encoder(list(texts))
             dec_vec = decoder(list(texts))
             logits = fusion_model(enc_vec, dec_vec)
@@ -249,23 +251,41 @@ def run_validation(
     label_list = [id_to_label[i] for i in sorted(id_to_label.keys())]
 
     result = evaluate_predictions(y_true=y_true, y_pred=y_pred, label_list=label_list)
+
     # Include ids too (useful for debugging)
     result["y_true_ids_head"] = y_true_ids[:20]
     result["y_pred_ids_head"] = y_pred_ids[:20]
     return result
 
 
+# =========================================================
 # MAIN
+# =========================================================
 def main() -> None:
+    logger, log_path = init_logger(
+        script_name="train_baseline",
+        run_group="training",
+    )
+
+    logger.info("Starting baseline training")
+    logger.info(f"Task                : {CFG.task}")
+    logger.info(f"Device              : {DEVICE}")
+    logger.info(f"Epochs              : {CFG.epochs}")
+    logger.info(f"Batch size          : {CFG.batch_size}")
+    logger.info(f"Grad accumulation   : {CFG.grad_accum_steps}")
+    logger.info(f"Learning rate       : {CFG.lr}")
+
     seed_everything(CFG.seed)
 
     out_dir = PROJECT_ROOT / CFG.output_dir / CFG.task
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    maybe_init_wandb(CFG)
+
     save_json(out_dir / "config.json", asdict(CFG))
 
+    # ---------------------------
     # 1) Load data
+    # ---------------------------
     data_module = QEvasionDataModule(
         dataset_name=CFG.dataset_name,
         validation_size=CFG.validation_size,
@@ -319,7 +339,9 @@ def main() -> None:
         pin_memory=(DEVICE == "cuda"),
     )
 
+    # ---------------------------
     # 2) Models
+    # ---------------------------
     encoder = DistilBERTEncoder().to(DEVICE)
     decoder = GPT2Decoder().to(DEVICE)
 
@@ -333,7 +355,9 @@ def main() -> None:
         num_classes=num_classes,
     ).to(DEVICE)
 
+    # ---------------------------
     # 3) Optimizer / loss
+    # ---------------------------
     optimizer = torch.optim.AdamW(
         fusion_model.parameters(),
         lr=CFG.lr,
@@ -343,7 +367,9 @@ def main() -> None:
 
     scaler = GradScaler(enabled=(CFG.use_amp and DEVICE == "cuda"))
 
+    # ---------------------------
     # 4) Train
+    # ---------------------------
     best_macro_f1 = -1.0
     best_path = out_dir / "best.pt"
 
@@ -358,6 +384,7 @@ def main() -> None:
             scaler=scaler,
             epoch_idx=epoch,
             cfg=CFG,
+            logger=logger,  # pass logger (but train_one_epoch can also run without it)
         )
 
         val_result = run_validation(
@@ -373,7 +400,7 @@ def main() -> None:
         macro_f1 = float(metrics.get("macro_f1", 0.0))
         acc = float(metrics.get("accuracy", 0.0))
 
-        print(
+        logger.info(
             f"[Epoch {epoch}] "
             f"TrainLoss={train_loss:.4f} "
             f"ValAcc={acc:.4f} "
@@ -383,16 +410,6 @@ def main() -> None:
         # Save per-epoch outputs
         save_json(out_dir / f"val_epoch_{epoch}.json", val_result)
 
-        # W&B
-        maybe_wandb_log(
-            CFG,
-            {
-                "epoch": float(epoch),
-                "train_loss": float(train_loss),
-                "val_accuracy": float(acc),
-                "val_macro_f1": float(macro_f1),
-            },
-        )
 
         # Best checkpoint
         if macro_f1 > best_macro_f1:
@@ -409,18 +426,29 @@ def main() -> None:
                 },
                 best_path,
             )
-            print(f"  -> Saved new best checkpoint to {best_path} (macro_f1={best_macro_f1:.4f})")
 
-    # Final summary
+            logger.info(
+                f"New best model saved | "
+                f"Epoch={epoch} | MacroF1={best_macro_f1:.4f} | Path={best_path}"
+            )
+
+    # ---------------------------
+    # 5) Final summary
+    # ---------------------------
     summary = {
         "task": CFG.task,
         "best_macro_f1": best_macro_f1,
         "device": DEVICE,
         "config": asdict(CFG),
         "num_classes": num_classes,
+        "log_path": str(log_path),
     }
     save_json(out_dir / "summary.json", summary)
-    print(f"Done. Summary saved to {out_dir / 'summary.json'}")
+
+    logger.info("Training completed")
+    logger.info(f"Best Macro-F1: {best_macro_f1:.4f}")
+    logger.info(f"Summary saved to {out_dir / 'summary.json'}")
+    logger.info(f"Log saved to {log_path}")
 
 
 if __name__ == "__main__":

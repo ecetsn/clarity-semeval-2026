@@ -1,10 +1,13 @@
+# src/representation/projections/mlp_projection.py
 import torch
 import torch.nn as nn
+from .base_projection import BaseProjection
 
 
-class ProjectionMLP(nn.Module):
+class ProjectionMLP(BaseProjection):
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int):
-        super().__init__()
+        super().__init__(output_dim)
+
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.GELU(),
