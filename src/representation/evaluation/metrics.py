@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Union, Any
 
 from sklearn.metrics import (
     accuracy_score,
@@ -10,18 +10,22 @@ from sklearn.metrics import (
     recall_score,
 )
 
+Label = Union[int, str]
+
 
 def compute_classification_metrics(
-    y_true: List[str],
-    y_pred: List[str],
-    label_list: List[str],
-) -> Dict[str, float]:
+    y_true: List[Label],
+    y_pred: List[Label],
+    label_list: List[Label],
+) -> Dict[str, Any]:
     """
     Computes accuracy, macro/weighted precision-recall-F1,
     and per-class metrics.
+
+    Fully JSON-serializable.
     """
 
-    metrics: Dict[str, float] = {
+    metrics: Dict[str, Any] = {
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "macro_precision": float(
             precision_score(y_true, y_pred, average="macro", zero_division=0)
@@ -52,18 +56,26 @@ def compute_classification_metrics(
         zero_division=0,
     )
 
-    per_class = {}
+    # -----------------------
+    # Per-class metrics
+    # -----------------------
+    per_class: Dict[Label, Dict[str, float]] = {}
+
     for label in label_list:
+        label_key = str(label)
         per_class[label] = {
-            "precision": float(report[label]["precision"]),
-            "recall": float(report[label]["recall"]),
-            "f1": float(report[label]["f1-score"]),
-            "support": int(report[label]["support"]),
+            "precision": float(report[label_key]["precision"]),
+            "recall": float(report[label_key]["recall"]),
+            "f1": float(report[label_key]["f1-score"]),
+            "support": int(report[label_key]["support"]),
         }
-        metrics[f"{label}_f1"] = float(report[label]["f1-score"])
+        metrics[f"{label}_f1"] = float(report[label_key]["f1-score"])
 
     metrics["per_class"] = per_class
 
+    # -----------------------
+    # Aggregate details
+    # -----------------------
     metrics["macro_avg_detail"] = {
         "precision": float(report["macro avg"]["precision"]),
         "recall": float(report["macro avg"]["recall"]),

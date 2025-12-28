@@ -6,9 +6,7 @@ from typing import List, Optional, Dict
 from datasets import Dataset, DatasetDict, load_dataset
 
 
-# ---------------------------------------------------------------------
 # Data container
-# ---------------------------------------------------------------------
 @dataclass
 class DataSplit:
     ids: List[str]
@@ -17,9 +15,7 @@ class DataSplit:
     evasion_labels: List[int]
 
 
-# ---------------------------------------------------------------------
 # Data module
-# ---------------------------------------------------------------------
 class QEvasionDataModule:
     """
     Loads and prepares the QEvasion dataset for representation learning
@@ -54,9 +50,7 @@ class QEvasionDataModule:
         self.dataset: Optional[DatasetDict] = None
         self.splits: Dict[str, DataSplit] = {}
 
-    # -----------------------------------------------------------------
     # Public API
-    # -----------------------------------------------------------------
     def prepare(self) -> "QEvasionDataModule":
         dataset = load_dataset(self.dataset_name)
 
@@ -85,9 +79,7 @@ class QEvasionDataModule:
             raise ValueError(f"Split '{name}' not found. Call prepare() first.")
         return self.splits[name]
 
-    # -----------------------------------------------------------------
     # Internal helpers
-    # -----------------------------------------------------------------
     def _convert_split(
         self, split: Dataset, limit: Optional[int]
     ) -> DataSplit:

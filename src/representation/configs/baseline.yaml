@@ -1,0 +1,25 @@
+experiment:
+  name: baseline
+  task: clarity
+
+model:
+  encoder:
+    name: distilbert-base-uncased
+    pooling: mean
+    freeze: true
+
+  decoder:
+    name: gpt2
+    pooling: mean
+    freeze: true
+
+training:
+  epochs: 5
+  batch_size: 4
+  lr: 2e-4
+  grad_accum_steps: 4
+  use_amp: true
+
+loss:
+  type: cross_entropy
+  class_weighted: false
