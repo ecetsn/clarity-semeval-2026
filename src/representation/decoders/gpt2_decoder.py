@@ -15,7 +15,7 @@ class GPT2Decoder(BaseDecoder):
         freeze: bool = True,
         device: Optional[str] = None,
     ):
-        super().__init__(pooling)
+        super().__init__(pooling=pooling, device=device)
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -23,22 +23,17 @@ class GPT2Decoder(BaseDecoder):
         self.decoder = AutoModelForCausalLM.from_pretrained(
             model_name,
             output_hidden_states=True,
-        )
+        ).to(self.device)
 
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.decoder.to(self.device)
-
+        self.output_dim = self.decoder.config.hidden_size
         self._lora_applied = False
 
         if freeze:
             self.freeze()
 
-    # -----------------------
-    # LoRA API (FINAL)
-    # -----------------------
-    def apply_lora(self, cfg: LoRAConfig) -> None:
+    def enable_lora(self, cfg: LoRAConfig) -> None:
         if self._lora_applied:
-            raise RuntimeError("LoRA has already been applied to this decoder.")
+            raise RuntimeError("LoRA already applied")
 
         peft_cfg = LoraConfig(
             r=cfg.r,
@@ -51,13 +46,8 @@ class GPT2Decoder(BaseDecoder):
 
         self.decoder = get_peft_model(self.decoder, peft_cfg)
         self._lora_applied = True
-
-        # Important: ensure LoRA params are trainable
         self.decoder.train()
 
-    # -----------------------
-    # Forward
-    # -----------------------
     def forward(self, texts: List[str]) -> torch.Tensor:
         inputs = self.tokenizer(
             texts,
@@ -71,9 +61,6 @@ class GPT2Decoder(BaseDecoder):
         hidden = outputs.hidden_states[-1]
         return self.pool(hidden, inputs["attention_mask"])
 
-    # -----------------------
-    # Freezing helpers
-    # -----------------------
     def freeze(self) -> None:
         self.decoder.eval()
         for p in self.decoder.parameters():

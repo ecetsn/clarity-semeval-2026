@@ -1,9 +1,11 @@
-from __future__ import annotations
+# src/representation/encoders/distilbert_encoder.py
 
+from __future__ import annotations
 import torch
 from transformers import AutoModel, AutoTokenizer
-from src.representation.encoders.base_encoder import BaseEncoder
 from typing import List
+
+from src.representation.encoders.base_encoder import BaseEncoder
 
 
 class DistilBERTEncoder(BaseEncoder):
@@ -12,19 +14,18 @@ class DistilBERTEncoder(BaseEncoder):
         model_name: str = "distilbert-base-uncased",
         pooling: str = "masked_mean",
         freeze: bool = True,
-        device: str | None = None,
+        device: str = "cpu",
     ):
-        super().__init__(pooling)
+        super().__init__(pooling=pooling)
 
+        self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.encoder = AutoModel.from_pretrained(model_name)
+        self.encoder = AutoModel.from_pretrained(model_name).to(self.device)
+
+        self.output_dim = self.encoder.config.hidden_size  # ✅ ADD THIS
 
         if freeze:
-            for p in self.encoder.parameters():
-                p.requires_grad = False
-
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.encoder.to(self.device)
+            self.freeze()
 
     def forward(self, texts: List[str]) -> torch.Tensor:
         inputs = self.tokenizer(
@@ -38,12 +39,12 @@ class DistilBERTEncoder(BaseEncoder):
         outputs = self.encoder(**inputs)
         return self.pool(outputs.last_hidden_state, inputs["attention_mask"])
 
-    def freeze(self) -> None:
+    def freeze(self):
         self.encoder.eval()
         for p in self.encoder.parameters():
             p.requires_grad = False
 
-    def unfreeze(self) -> None:
+    def unfreeze(self):
         self.encoder.train()
         for p in self.encoder.parameters():
             p.requires_grad = True

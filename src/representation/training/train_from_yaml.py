@@ -12,7 +12,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import yaml
-from torch.amp import GradScaler, autocast
+from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader, Dataset
 
 from src.representation.data.qev_datamodule import QEvasionDataModule

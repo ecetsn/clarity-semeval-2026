@@ -1,0 +1,73 @@
+experiment:
+  name: sanity_roberta_opt
+  task: clarity
+
+logging:
+  base_dir: experiments/logs/representation
+  run_group: sanity_checks
+
+outputs:
+  base_dir: experiments/representation/sanity
+
+data:
+  dataset_name: ailsntua/QEvasion
+  validation_size: 0.2
+  max_train_samples: null
+  max_val_samples: null
+  num_workers: 0
+
+training:
+  seed: 13
+  epochs: 2                # short run, sanity only
+  batch_size: 4
+  lr: 0.0002
+  weight_decay: 0.01
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+  use_amp: true
+  log_every_steps: 50
+
+# -------------------------
+# ENCODER: RoBERTa
+# -------------------------
+encoder:
+  type: roberta
+  model_name: roberta-base
+  pooling: masked_mean     # simple & robust
+  freeze: true
+
+# -------------------------
+# DECODER: OPT
+# -------------------------
+decoder:
+  type: opt
+  model_name: facebook/opt-1.3b
+  pooling: masked_mean
+  freeze: true
+  lora:
+    enabled: false
+
+# -------------------------
+# PROJECTIONS
+# -------------------------
+projection:
+  encoder:
+    type: mlp
+    params:
+      input_dim: 768
+      hidden_dim: 256
+      output_dim: 256
+
+  decoder:
+    type: mlp
+    params:
+      input_dim: 2048       # OPT-1.3B hidden size
+      hidden_dim: 256
+      output_dim: 256
+
+# -------------------------
+# LOSS (no class weighting)
+# -------------------------
+loss:
+  type: cross_entropy
+  class_weighted: false
