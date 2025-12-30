@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 from sklearn.linear_model import LogisticRegression
 
 from src.data.datamodule import QEvasionDataModule, DataSplit
@@ -98,6 +100,15 @@ class LateFusionExperiment:
         val_split = data_module.get_split("validation")
         test_split = data_module.get_split("test")
         label_list = data_module.get_label_list()
+        print(
+            f"[LateFusion] Raw splits -> train={len(train_split.texts)}, "
+            f"val={len(val_split.texts)}, test={len(test_split.texts)}"
+        )
+        train_split = self._resample_train_split(
+            train_split,
+            dataset_cfg.get("resampling", {}),
+            seed=dataset_cfg.get("random_seed", 42),
+        )
         calib_fraction = dataset_cfg.get("calibration_fraction", 0.0) or 0.0
         val_split, calib_split = self._split_for_calibration(
             val_split, calib_fraction, dataset_cfg.get("random_seed", 42)
@@ -119,23 +130,36 @@ class LateFusionExperiment:
         for idx, model_cfg in enumerate(self.config.get("base_models", [])):
             name = model_cfg.get("name", f"model_{idx}")
             print(f"[LateFusion] Training base model '{name}' ({model_cfg['type']})...")
-            model = create_model(model_cfg, label_list)
-            model.fit(train_split.texts, train_split.labels)
-            val_probs = model.predict_proba(val_split.texts)
-            test_probs = model.predict_proba(test_split.texts)
-            calib_probs = model.predict_proba(calib_split.texts) if calib_split else None
+            (
+                val_probs,
+                test_probs,
+                calib_probs,
+                val_preds,
+                test_preds,
+            ) = self._train_with_replicas(
+                model_cfg,
+                label_list,
+                train_split,
+                val_split,
+                test_split,
+                calib_split,
+                seed=dataset_cfg.get("random_seed", 42),
+            )
             model_results.append(
                 BaseModelResult(
                     name=name, val_probs=val_probs, test_probs=test_probs, calib_probs=calib_probs
                 )
             )
 
-            val_preds = model.predict(val_split.texts)
-            test_preds = model.predict(test_split.texts)
             per_model_metrics[name] = {
                 "validation": compute_classification_metrics(val_split.labels, val_preds, label_list),
                 "test": compute_classification_metrics(test_split.labels, test_preds, label_list),
             }
+            self._log_metric_summary(
+                name,
+                per_model_metrics[name],
+                label_list,
+            )
             print(f"[LateFusion] Finished base model '{name}'.")
 
         if not model_results:
@@ -165,6 +189,10 @@ class LateFusionExperiment:
                 "calibration_size": len(calib_split.labels),
                 "calibration_fraction": calib_fraction,
             }
+            print(
+                f"[LateFusion] Calibration applied -> temperature={best_temp:.3f}, "
+                f"calib_size={len(calib_split.labels)}"
+            )
         else:
             self.calibration_result = None
 
@@ -174,6 +202,7 @@ class LateFusionExperiment:
             "validation": compute_classification_metrics(val_split.labels, fusion_val_preds, label_list),
             "test": compute_classification_metrics(test_split.labels, fusion_test_preds, label_list),
         }
+        self._log_metric_summary("fusion", fusion_metrics, label_list)
 
         print("[LateFusion] Writing metrics and predictions...")
         self._write_artifacts(
@@ -266,6 +295,174 @@ class LateFusionExperiment:
             texts=[split.texts[i] for i in indices],
             labels=[split.labels[i] for i in indices],
         )
+
+    def _resample_train_split(
+        self,
+        split: DataSplit,
+        resampling_cfg: Dict,
+        seed: int,
+    ) -> DataSplit:
+        if not resampling_cfg:
+            return split
+
+        resampling_type = (resampling_cfg.get("type") or "").lower()
+        if resampling_type in ("", "none", None):
+            return split
+
+        sampler = None
+        if resampling_type in ("over", "oversample", "oversampling"):
+            sampler = RandomOverSampler(random_state=resampling_cfg.get("random_seed", seed))
+        elif resampling_type in ("under", "undersample", "undersampling"):
+            sampler = RandomUnderSampler(random_state=resampling_cfg.get("random_seed", seed))
+        else:
+            raise ValueError(f"Unsupported resampling type: {resampling_type}")
+
+        n = len(split.labels)
+        if n == 0:
+            return split
+        print(f"[Resampling] Strategy={resampling_type} on {n} train rows")
+        before_counts = self._label_counts(split.labels)
+        x_placeholder = np.arange(n).reshape(-1, 1)
+        y = np.array(split.labels)
+        resampled_indices, resampled_labels = sampler.fit_resample(x_placeholder, y)
+        idx = resampled_indices.ravel()
+        after_counts = self._label_counts(resampled_labels)
+        added_counts = {
+            label: after_counts.get(label, 0) - before_counts.get(label, 0)
+            for label in after_counts
+        }
+        print(
+            f"[Resampling] Label counts before={before_counts} "
+            f"after={after_counts} added={added_counts}"
+        )
+        return DataSplit(
+            ids=[split.ids[i] for i in idx],
+            texts=[split.texts[i] for i in idx],
+            labels=list(resampled_labels),
+        )
+
+    def _train_with_replicas(
+        self,
+        model_cfg: Dict,
+        label_list: List[str],
+        train_split: DataSplit,
+        val_split: DataSplit,
+        test_split: DataSplit,
+        calib_split: Optional[DataSplit],
+        seed: int,
+    ):
+        replicas = int(model_cfg.get("replicas", 1) or 1)
+        if replicas <= 1:
+            model = create_model(model_cfg, label_list)
+            model.fit(train_split.texts, train_split.labels)
+            val_probs = model.predict_proba(val_split.texts)
+            test_probs = model.predict_proba(test_split.texts)
+            calib_probs = model.predict_proba(calib_split.texts) if calib_split else None
+            val_preds = model.predict(val_split.texts)
+            test_preds = model.predict(test_split.texts)
+            return val_probs, test_probs, calib_probs, val_preds, test_preds
+
+        sampling = model_cfg.get("replica_sampling", "partition")
+        weights = model_cfg.get("replica_weights")
+        indices_per_replica = self._build_replica_indices(
+            len(train_split.labels), replicas, sampling, seed
+        )
+        effective_replicas = len(indices_per_replica)
+        print(
+            f"[Replicas] {model_cfg.get('name', 'model')} -> replicas={effective_replicas} "
+            f"sampling={sampling}"
+        )
+        if weights is None:
+            weights_array = np.ones(effective_replicas, dtype=float)
+        else:
+            weights_array = np.array(weights, dtype=float)
+            if weights_array.shape[0] != effective_replicas:
+                raise ValueError(
+                    f"replica_weights length ({weights_array.shape[0]}) does not match replicas ({effective_replicas})."
+                )
+        weights_array = weights_array / weights_array.sum()
+
+        val_prob_list = []
+        test_prob_list = []
+        calib_prob_list = [] if calib_split else None
+
+        for rep_idx, indices in enumerate(indices_per_replica):
+            subset = self._subset_split(train_split, indices)
+            print(
+                f"[Replicas] Training replica {rep_idx+1}/{effective_replicas} "
+                f"on {len(subset.labels)} samples"
+            )
+            model = create_model(model_cfg, label_list)
+            model.fit(subset.texts, subset.labels)
+            val_prob_list.append(model.predict_proba(val_split.texts))
+            test_prob_list.append(model.predict_proba(test_split.texts))
+            if calib_split and calib_prob_list is not None:
+                calib_prob_list.append(model.predict_proba(calib_split.texts))
+
+        val_probs = self._weighted_average_probs(val_prob_list, weights_array)
+        test_probs = self._weighted_average_probs(test_prob_list, weights_array)
+        calib_probs = (
+            self._weighted_average_probs(calib_prob_list, weights_array)
+            if calib_split and calib_prob_list
+            else None
+        )
+        val_preds = [label_list[idx] for idx in np.argmax(val_probs, axis=1)]
+        test_preds = [label_list[idx] for idx in np.argmax(test_probs, axis=1)]
+        return val_probs, test_probs, calib_probs, val_preds, test_preds
+
+    def _build_replica_indices(
+        self, n_samples: int, replicas: int, sampling: str, seed: int
+    ) -> List[np.ndarray]:
+        replicas = max(1, min(replicas, n_samples)) if sampling == "partition" else max(1, replicas)
+        rng = np.random.default_rng(seed)
+        if sampling == "partition":
+            indices = np.arange(n_samples)
+            rng.shuffle(indices)
+            splits = np.array_split(indices, replicas)
+            kept = [split for split in splits if len(split) > 0]
+            return kept
+
+        # bootstrap: sample (approx) n/replicas per replica with replacement
+        base_size = max(1, int(np.ceil(n_samples / replicas)))
+        return [rng.choice(n_samples, size=base_size, replace=True) for _ in range(replicas)]
+
+    def _weighted_average_probs(self, prob_list: List[np.ndarray], weights: np.ndarray) -> np.ndarray:
+        stacked = np.stack(prob_list, axis=0)  # (m, n, c)
+        return np.tensordot(weights, stacked, axes=(0, 0))
+
+    def _log_metric_summary(self, name: str, metrics: Dict, label_list: List[str]) -> None:
+        def short_row(split_name: str):
+            m = metrics[split_name]
+            return (
+                f"acc={m['accuracy']:.3f} "
+                f"macro_f1={m['macro_f1']:.3f} "
+                f"weighted_f1={m['weighted_f1']:.3f}"
+            )
+
+        print(f"[Metrics] {name} -> val {short_row('validation')} | test {short_row('test')}")
+        for split_name in ("validation", "test"):
+            per_class = metrics[split_name].get("per_class", {})
+            if not per_class:
+                continue
+            print(f"[Metrics] {name} per-class ({split_name}):")
+            for label in label_list:
+                if label not in per_class:
+                    continue
+                pc = per_class[label]
+                print(
+                    f"  {label:15s} "
+                    f"P={pc['precision']:.3f} "
+                    f"R={pc['recall']:.3f} "
+                    f"F1={pc['f1']:.3f} "
+                    f"N={pc['support']}"
+                )
+
+    @staticmethod
+    def _label_counts(labels: List[str]) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for lbl in labels:
+            counts[lbl] = counts.get(lbl, 0) + 1
+        return counts
 
     def _optimize_temperature(self, probs: np.ndarray, labels: List[str], label_list: List[str]) -> float:
         if probs.size == 0:

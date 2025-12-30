@@ -1,6 +1,6 @@
 dataset:
   dataset_name: ailsntua/QEvasion
-  label_column: clarity_label  # Task 1 (switch to evasion_label for Task 2)
+  label_column: evasion_label  # Task 1 clarity_label (switch to evasion_label for Task 2)
   text_column: interview_answer
   question_column: question
   validation_size: 0.2
@@ -9,15 +9,32 @@ dataset:
   max_train_samples: null
   max_val_samples: null
   max_test_samples: null
+  resampling:
+    type: over          # options: over, under, none/null
+    random_seed: 42
 
 base_models:
   - name: tfidf_baseline
     type: tfidf_logreg
+    replicas: 20         # set >1 to enable replica ensemble training
+    replica_sampling: partition  # options: partition, bootstrap
+    replica_weights: null        # optional list of floats
     params:
       ngram_range: [1, 2]
       max_features: 25000
       c: 3.0
       max_iter: 1000
+  - name: tfidf_xgboost
+    type: tfidf_xgboost
+    replicas: 1
+    params:
+      ngram_range: [1, 2]
+      max_features: 30000
+      max_depth: 6
+      learning_rate: 0.1
+      n_estimators: 400
+      subsample: 0.8
+      colsample_bytree: 0.8
   - name: openrouter_embedder
     type: openrouter_logreg
     params:
@@ -32,7 +49,7 @@ base_models:
       batch_size: 2
 
 fusion:
-  type: logistic_regression # weighted_average for majority voting
+  type: weighted_average # weighted_average for majority voting, logistic_regression for fusion
   params:
     C: 2.0
     max_iter: 1000

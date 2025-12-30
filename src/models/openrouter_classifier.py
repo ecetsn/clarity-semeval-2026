@@ -37,6 +37,7 @@ class OpenRouterEmbeddingClassifier(BaseTextClassifier):
             api_url=url,
             model=model_name,
             batch_size=batch_size,
+            verbose=True,
         )
         self.classifier = LogisticRegression(C=c, max_iter=max_iter, solver="lbfgs")
         self._embedding_cache: Dict[str, np.ndarray] = {}
@@ -59,6 +60,10 @@ class OpenRouterEmbeddingClassifier(BaseTextClassifier):
             return np.zeros((0, dim))
         to_compute = [text for text in texts if text not in self._embedding_cache]
         if to_compute:
+            print(
+                f"[OpenRouter] Computing embeddings for {len(to_compute)} new texts "
+                f"(cache size={len(self._embedding_cache)}, batch_size={self.client.batch_size})"
+            )
             new_embeddings = self.client.embed(to_compute)
             for text, emb in zip(to_compute, new_embeddings):
                 self._embedding_cache[text] = emb

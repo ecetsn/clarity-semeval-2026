@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -57,13 +58,13 @@ class QEvasionDataModule:
         )
 
         self._splits["train"] = self._convert_split(
-            split_dataset["train"], limit=self.max_train_samples
+            split_dataset["train"], limit=self.max_train_samples, split_name="train"
         )
         self._splits["validation"] = self._convert_split(
-            split_dataset["test"], limit=self.max_val_samples
+            split_dataset["test"], limit=self.max_val_samples, split_name="validation"
         )
         self._splits["test"] = self._convert_split(
-            dataset["test"], limit=self.max_test_samples
+            dataset["test"], limit=self.max_test_samples, split_name="test"
         )
         self._label_list = self._extract_label_list()
         self._dataset = dataset
@@ -95,10 +96,15 @@ class QEvasionDataModule:
                 seen.add(lbl)
         return ordered
 
-    def _convert_split(self, hf_split: Dataset, limit: Optional[int]) -> DataSplit:
+    def _convert_split(
+        self, hf_split: Dataset, limit: Optional[int], split_name: str
+    ) -> DataSplit:
         if limit is not None:
             limit = min(limit, len(hf_split))
             hf_split = hf_split.select(range(limit))
+
+        if split_name == "test" and self.label_column == "evasion_label":
+            hf_split = self._apply_evasion_test_majority_vote(hf_split)
 
         if "index" in hf_split.column_names:
             raw_ids = hf_split["index"]
@@ -119,6 +125,46 @@ class QEvasionDataModule:
             for question, answer in zip(questions, answers)
         ]
         return DataSplit(ids=ids, texts=texts, labels=labels)
+
+    def _apply_evasion_test_majority_vote(self, hf_split: Dataset) -> Dataset:
+        """Resolve evasion labels on the test split via 2-of-3 annotator majority vote."""
+        required = {"annotator1", "annotator2", "annotator3"}
+        missing = required - set(hf_split.column_names)
+        if missing:
+            missing_cols = ", ".join(sorted(missing))
+            raise ValueError(
+                f"Cannot resolve evasion labels for test split; missing columns: {missing_cols}"
+            )
+
+        def assign_labels(batch: Dict[str, List[Optional[str]]]) -> Dict[str, List]:
+            resolved_labels: List[Optional[str]] = []
+            keep_mask: List[bool] = []
+            for a1, a2, a3 in zip(
+                batch["annotator1"], batch["annotator2"], batch["annotator3"]
+            ):
+                votes = [
+                    str(v).strip()
+                    for v in (a1, a2, a3)
+                    if v is not None and str(v).strip()
+                ]
+                counts = Counter(votes)
+                if not counts:
+                    resolved_labels.append(None)
+                    keep_mask.append(False)
+                    continue
+                top_label, count = counts.most_common(1)[0]
+                has_majority = count >= 2
+                resolved_labels.append(top_label if has_majority else None)
+                keep_mask.append(has_majority)
+            batch["_keep_mask"] = keep_mask
+            batch[self.label_column] = resolved_labels
+            return batch
+
+        updated = hf_split.map(
+            assign_labels, batched=True, load_from_cache_file=False, desc="Majority vote"
+        )
+        filtered = updated.filter(lambda example: example["_keep_mask"])
+        return filtered.remove_columns("_keep_mask")
 
     @staticmethod
     def _compose_text(question: Optional[str], answer: str) -> str:

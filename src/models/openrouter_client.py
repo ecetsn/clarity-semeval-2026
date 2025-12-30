@@ -18,6 +18,7 @@ class OpenRouterEmbeddingClient:
         batch_size: int = 8,
         max_retries: int = 5,
         retry_wait: float = 2.0,
+        verbose: bool = True,
     ) -> None:
         self.api_key = api_key
         self.api_url = api_url
@@ -25,11 +26,18 @@ class OpenRouterEmbeddingClient:
         self.batch_size = max(1, batch_size)
         self.max_retries = max_retries
         self.retry_wait = retry_wait
+        self.verbose = verbose
 
     def embed(self, texts: Sequence[str]) -> np.ndarray:
         batched_embeddings: List[np.ndarray] = []
-        for start in range(0, len(texts), self.batch_size):
+        total_batches = (len(texts) + self.batch_size - 1) // self.batch_size
+        for batch_idx, start in enumerate(range(0, len(texts), self.batch_size), start=1):
             batch = texts[start : start + self.batch_size]
+            if self.verbose:
+                print(
+                    f"[OpenRouter] Requesting batch {batch_idx}/{total_batches} "
+                    f"(size={len(batch)}) for model={self.model}"
+                )
             batched_embeddings.append(self._embed_batch(batch))
         if not batched_embeddings:
             return np.zeros((0, 0), dtype=float)
@@ -57,4 +65,3 @@ class OpenRouterEmbeddingClient:
             time.sleep(self.retry_wait * attempt)
 
         raise RuntimeError("Unreachable state while requesting OpenRouter embeddings.")
-

@@ -9,10 +9,16 @@ dataset:
   max_train_samples: null
   max_val_samples: null
   max_test_samples: null
+  resampling:
+    type: over          # options: over, under, none/null
+    random_seed: 7
 
 base_models:
   - name: tfidf_evasion
     type: tfidf_logreg
+    replicas: 1         # set >1 to enable replica ensemble training
+    replica_sampling: partition  # options: partition, bootstrap
+    replica_weights: null        # optional list of floats
     params:
       ngram_range: [1, 2]
       max_features: 30000
