@@ -1,5 +1,16 @@
 # SemEval 2026 Task 6: Modular Context Tree Feature Extraction
 
+## Run in Google Colab
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EonTechie/semeval-context-tree-modular/blob/main/notebooks/01_data_split.ipynb)
+
+Click the badge above to open the first notebook directly in Google Colab. Run notebooks sequentially:
+1. `01_data_split.ipynb` - Split dataset into Train/Dev/Test
+2. `02_feature_extraction_separate.ipynb` - Extract features for each model
+3. `03_train_evaluate.ipynb` - Train and evaluate individual models
+4. `04_early_fusion.ipynb` - Early fusion experiments
+5. `05_final_evaluation.ipynb` - Final evaluation on test set
+
 ## 📋 Overview
 
 This repository implements **modular Context Tree feature extraction** for SemEval 2026 Task 6 (CLARITY).
@@ -17,78 +28,7 @@ This repository implements **modular Context Tree feature extraction** for SemEv
 
 ## 🚀 Quick Start (Colab)
 
-### Option 1: GitHub Only (Recommended for small experiments)
-
-1. Open [Google Colab](https://colab.research.google.com/)
-2. Create a new notebook
-3. Run the setup cell:
-
-```python
-# Clone repository
-!git clone https://github.com/EonTechie/semeval-context-tree-modular.git
-%cd semeval-context-tree-modular
-
-# Install dependencies
-!pip install -r requirements.txt
-
-# Add to path
-import sys
-sys.path.append('/content/semeval-context-tree-modular')
-
-# Import modules
-from src.features.extraction import extract_features_for_model
-from src.storage.manager import StorageManager
-
-print("✅ Setup complete!")
-```
-
-4. Open any notebook from `notebooks/` folder
-5. Run cells sequentially
-
-### Option 2: GitHub + Google Drive (For large features/models)
-
-1. Open [Google Colab](https://colab.research.google.com/)
-2. Create a new notebook
-3. Run the setup cell:
-
-```python
-# Clone repository
-!git clone https://github.com/EonTechie/semeval-context-tree-modular.git
-%cd semeval-context-tree-modular
-
-# Install dependencies
-!pip install -r requirements.txt
-
-# Mount Drive
-from google.colab import drive
-drive.mount('/content/drive')
-
-# Setup paths
-BASE_PATH = '/content/semeval-context-tree-modular'
-DATA_PATH = '/content/drive/MyDrive/semeval_data'
-
-# Add to path
-import sys
-sys.path.append(BASE_PATH)
-
-# Import modules
-from src.features.extraction import extract_features_for_model
-from src.storage.manager import StorageManager
-
-# Initialize storage
-storage = StorageManager(
-    base_path=BASE_PATH,
-    data_path=DATA_PATH,
-    github_path=BASE_PATH
-)
-
-print("✅ Setup complete!")
-print(f"📁 Code/Metadata: {BASE_PATH}")
-print(f"📁 Large Data: {DATA_PATH}")
-```
-
-4. Open any notebook from `notebooks/` folder
-5. Update `DATA_PATH` in notebook to save large files to Drive
+Click the Colab badge above to open the first notebook. Each notebook includes automatic setup (clone repo, mount Drive). Run notebooks sequentially: 01 → 02 → 03 → 04 → 05.
 
 ## 📁 Repository Structure
 
@@ -110,11 +50,13 @@ semeval-modular/
 ## 🔧 Requirements
 
 See `requirements.txt` for full list. Main dependencies:
-- torch
-- transformers
-- scikit-learn
-- pandas
-- numpy
+- torch>=2.0.0
+- transformers>=4.30.0
+- scikit-learn>=1.3.0
+- pandas>=2.0.0
+- numpy>=1.24.0
+
+**Note:** Colab notebooks use pre-installed packages. Requirements.txt is not installed automatically to avoid runtime issues.
 
 ## 📦 Installation from GitHub
 
@@ -126,6 +68,10 @@ cd semeval-context-tree-modular
 # Install dependencies
 pip install -r requirements.txt
 ```
+
+## 🔄 Reproducibility
+
+All random operations use fixed seed `42` (data splitting, classifiers, training). Run notebooks sequentially to reproduce siparismaili01 experiment.
 
 ## 🔗 Related Implementations
 
