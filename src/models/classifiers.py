@@ -4,6 +4,7 @@ Classifier definitions and training
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from typing import Dict, Any, Optional
@@ -35,7 +36,9 @@ def get_classifier_dict(random_state: int = 42) -> Dict[str, Any]:
             ("clf", LogisticRegression(
                 max_iter=1000,
                 random_state=random_state,
-                n_jobs=-1
+                n_jobs=-1,
+                class_weight="balanced",
+                solver="lbfgs"
             ))
         ]),
         "LinearSVC": Pipeline([
@@ -43,15 +46,32 @@ def get_classifier_dict(random_state: int = 42) -> Dict[str, Any]:
             ("clf", LinearSVC(
                 max_iter=1000,
                 random_state=random_state,
-                dual=False
+                dual=False,
+                class_weight="balanced"
             ))
         ]),
         "RandomForest": RandomForestClassifier(
             n_estimators=100,
             random_state=random_state,
             n_jobs=-1,
-            verbose=0
+            verbose=0,
+            class_weight="balanced_subsample"
         ),
+        "MLP": Pipeline([
+            ("scaler", StandardScaler()),
+            ("clf", MLPClassifier(
+                hidden_layer_sizes=(64, 32),
+                activation="relu",
+                alpha=1e-4,
+                batch_size=64,
+                learning_rate_init=1e-3,
+                max_iter=300,
+                early_stopping=True,
+                n_iter_no_change=15,
+                random_state=random_state,
+                verbose=False
+            ))
+        ]),
     }
     
     if XGBOOST_AVAILABLE:

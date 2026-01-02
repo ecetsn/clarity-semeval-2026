@@ -73,8 +73,8 @@ class StorageManager:
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"✅ Saved features: {npy_path}")
-        print(f"✅ Saved metadata: {meta_path}")
+        print(f"Saved features: {npy_path}")
+        print(f"Saved metadata: {meta_path}")
         return npy_path
     
     def load_features(self, model_name: str, task: str, split: str) -> np.ndarray:
@@ -112,7 +112,7 @@ class StorageManager:
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"✅ Saved predictions: {npy_path}")
+        print(f"Saved predictions: {npy_path}")
         return npy_path
     
     def save_probabilities(self, probabilities: np.ndarray, model_name: str, classifier: str,
@@ -143,7 +143,7 @@ class StorageManager:
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"✅ Saved probabilities: {npy_path}")
+        print(f"Saved probabilities: {npy_path}")
         return npy_path
     
     def save_fused_features(self, X: np.ndarray, models: List[str], task: str, split: str,
@@ -170,7 +170,7 @@ class StorageManager:
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"✅ Saved fused features: {npy_path}")
+        print(f"Saved fused features: {npy_path}")
         return npy_path
     
     def save_splits(self, train_ds, dev_ds, test_ds):
@@ -199,7 +199,7 @@ class StorageManager:
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"✅ Saved splits: {splits_path}")
+        print(f"Saved splits: {splits_path}")
     
     def load_split(self, split_name: str):
         """Load dataset split"""
@@ -214,7 +214,7 @@ class StorageManager:
         results_path = self.github_path / f'results/{experiment_id}.json'
         with open(results_path, 'w') as f:
             json.dump(results_dict, f, indent=2)
-        print(f"✅ Saved results: {results_path}")
+        print(f"Saved results: {results_path}")
         return results_path
     
     def load_metadata(self, model_name: str, task: str, split: str) -> Dict:
@@ -250,4 +250,127 @@ class StorageManager:
         results_path = self.github_path / f'results/{experiment_id}.json'
         with open(results_path, 'r') as f:
             return json.load(f)
+    
+    def save_table(
+        self,
+        df: Any,
+        table_name: str,
+        formats: List[str] = ['csv', 'html'],
+        save_dir: Optional[str] = None
+    ) -> Dict[str, Path]:
+        """
+        Save DataFrame table in multiple formats (CSV, HTML, PNG)
+        
+        Args:
+            df: DataFrame or Styled DataFrame to save
+            table_name: Name for the table file (without extension)
+            formats: List of formats to save ('csv', 'html', 'png')
+            save_dir: Directory to save (default: results/tables in data_path)
+        
+        Returns:
+            Dict mapping format -> Path to saved file
+        """
+        if save_dir is None:
+            save_dir = self.data_path / 'results/tables'
+        else:
+            save_dir = Path(save_dir)
+        
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        saved_paths = {}
+        
+        # Extract DataFrame if it's a Styler
+        if hasattr(df, 'data'):
+            df_to_save = df.data
+        else:
+            df_to_save = df
+        
+        # Save CSV
+        if 'csv' in formats:
+            csv_path = save_dir / f'{table_name}.csv'
+            df_to_save.to_csv(csv_path, index=True)
+            saved_paths['csv'] = csv_path
+            print(f"Saved table (CSV): {csv_path}")
+        
+        # Save HTML
+        if 'html' in formats:
+            html_path = save_dir / f'{table_name}.html'
+            if hasattr(df, 'render'):
+                # Styled DataFrame
+                html_content = df.render()
+                with open(html_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+            else:
+                # Regular DataFrame
+                df_to_save.to_html(html_path, index=True, escape=False)
+            saved_paths['html'] = html_path
+            print(f"Saved table (HTML): {html_path}")
+        
+        # Save PNG (requires matplotlib)
+        if 'png' in formats:
+            try:
+                import matplotlib.pyplot as plt
+                from matplotlib.backends.backend_agg import FigureCanvasAgg
+                
+                fig, ax = plt.subplots(figsize=(12, max(8, len(df_to_save) * 0.3)))
+                ax.axis('tight')
+                ax.axis('off')
+                
+                # Convert DataFrame to table
+                table = ax.table(
+                    cellText=df_to_save.values,
+                    colLabels=df_to_save.columns,
+                    rowLabels=df_to_save.index,
+                    cellLoc='center',
+                    loc='center'
+                )
+                table.auto_set_font_size(False)
+                table.set_fontsize(9)
+                table.scale(1.2, 1.5)
+                
+                png_path = save_dir / f'{table_name}.png'
+                plt.savefig(png_path, dpi=150, bbox_inches='tight')
+                plt.close()
+                saved_paths['png'] = png_path
+                print(f"Saved table (PNG): {png_path}")
+            except Exception as e:
+                print(f"WARNING: Could not save PNG: {e}")
+        
+        return saved_paths
+    
+    def save_all_results_dict(
+        self,
+        all_results: Dict,
+        filename: str = 'all_results.pkl'
+    ) -> Path:
+        """
+        Save all_results dictionary to persistent storage
+        
+        Args:
+            all_results: Complete results dictionary
+            filename: Filename for saved dictionary
+        
+        Returns:
+            Path to saved file
+        """
+        # Save to Drive (large file)
+        pkl_path = self.data_path / f'results/{filename}'
+        pkl_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(pkl_path, 'wb') as f:
+            pickle.dump(all_results, f)
+        
+        # Also save JSON version (for smaller size, but may lose some data)
+        json_path = self.github_path / f'results/{filename.replace(".pkl", ".json")}'
+        try:
+            # Convert to JSON-serializable format
+            json_results = json.loads(json.dumps(all_results, default=str))
+            with open(json_path, 'w') as f:
+                json.dump(json_results, f, indent=2)
+            print(f"Saved all_results (JSON): {json_path}")
+        except Exception as e:
+            print(f"WARNING: Could not save JSON version: {e}")
+        
+        print(f"Saved all_results (Pickle): {pkl_path}")
+        return pkl_path
 

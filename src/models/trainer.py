@@ -80,7 +80,7 @@ def train_and_evaluate(
     
     # Create plots (confusion matrix, PR curves, ROC curves)
     if create_plots:
-        print(f"\n📊 Creating evaluation plots for {task_name}...")
+        print(f"\nCreating evaluation plots for {task_name}...")
         for name, result in results.items():
             if result['dev_proba'] is not None:
                 visualize_all_evaluation(
