@@ -1,0 +1,37 @@
+warning: in the working copy of 'src/features/extraction.py', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/features/extraction.py b/src/features/extraction.py[m
+[1mindex 05e9262..1a95415 100644[m
+[1m--- a/src/features/extraction.py[m
+[1m+++ b/src/features/extraction.py[m
+[36m@@ -234,7 +234,7 @@[m [mdef featurize_hf_dataset_in_batches_v2([m
+     batch_size: int = 8,[m
+     max_sequence_length: int = 512,[m
+     question_key: str = "question",[m
+[31m-    answer_key: str = "answer",[m
+[32m+[m[32m    answer_key: str = "interview_answer",  # QEvasion dataset uses 'interview_answer', not 'answer'[m
+     show_progress: bool = True,[m
+     tfidf_vectorizer=None,[m
+ ) -> Tuple[np.ndarray, List[str], Any]:[m
+[36m@@ -248,8 +248,8 @@[m [mdef featurize_hf_dataset_in_batches_v2([m
+         device: torch device[m
+         batch_size: Batch size for processing[m
+         max_sequence_length: Max sequence length[m
+[31m-        question_key: Key for question text in dataset[m
+[31m-        answer_key: Key for answer text in dataset[m
+[32m+[m[32m        question_key: Key for question text in dataset (default: 'question' for QEvasion)[m
+[32m+[m[32m        answer_key: Key for answer text in dataset (default: 'interview_answer' for QEvasion)[m
+         show_progress: Show progress bar[m
+         tfidf_vectorizer: Pre-fitted TF-IDF vectorizer (or None to fit new on first batch)[m
+     [m
+[36m@@ -257,6 +257,11 @@[m [mdef featurize_hf_dataset_in_batches_v2([m
+         feature_matrix: (N, 19) numpy array[m
+         feature_names: List of 19 feature names[m
+         tfidf_vectorizer: Fitted TF-IDF vectorizer (for reuse)[m
+[32m+[m[41m    [m
+[32m+[m[32m    Note:[m
+[32m+[m[32m        For QEvasion dataset:[m
+[32m+[m[32m        - question_key should be 'question'[m
+[32m+[m[32m        - answer_key should be 'interview_answer' (not 'answer')[m
+     """[m
+     model.eval()[m
+     [m

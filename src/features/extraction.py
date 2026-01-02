@@ -233,8 +233,8 @@ def featurize_hf_dataset_in_batches_v2(
     device,
     batch_size: int = 8,
     max_sequence_length: int = 512,
-    question_key: str = "question",
-    answer_key: str = "answer",
+    question_key: str = "interview_question",  # QEvasion dataset: 'interview_question' is the original question, 'question' is paraphrased
+    answer_key: str = "interview_answer",  # QEvasion dataset uses 'interview_answer', not 'answer'
     show_progress: bool = True,
     tfidf_vectorizer=None,
 ) -> Tuple[np.ndarray, List[str], Any]:
@@ -248,8 +248,8 @@ def featurize_hf_dataset_in_batches_v2(
         device: torch device
         batch_size: Batch size for processing
         max_sequence_length: Max sequence length
-        question_key: Key for question text in dataset
-        answer_key: Key for answer text in dataset
+        question_key: Key for question text in dataset (default: 'interview_question' for QEvasion - original question, not paraphrased 'question')
+        answer_key: Key for answer text in dataset (default: 'interview_answer' for QEvasion)
         show_progress: Show progress bar
         tfidf_vectorizer: Pre-fitted TF-IDF vectorizer (or None to fit new on first batch)
     
@@ -257,6 +257,11 @@ def featurize_hf_dataset_in_batches_v2(
         feature_matrix: (N, 19) numpy array
         feature_names: List of 19 feature names
         tfidf_vectorizer: Fitted TF-IDF vectorizer (for reuse)
+    
+    Note:
+        For QEvasion dataset:
+        - question_key should be 'interview_question' (original question, NOT 'question' which is paraphrased)
+        - answer_key should be 'interview_answer' (not 'answer')
     """
     model.eval()
     
