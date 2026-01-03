@@ -65,8 +65,11 @@ def map_evasion_predictions_to_clarity(
         if isinstance(pred, (int, np.integer)):
             # Integer prediction: use as index
             evasion_pred_labels.append(evasion_label_list[int(pred)])
-        elif isinstance(pred, (str, np.str_)):
+        elif isinstance(pred, str):
             # String prediction: use directly
+            evasion_pred_labels.append(str(pred))
+        elif hasattr(np, 'str_') and isinstance(pred, np.str_):
+            # NumPy string type (NumPy 1.x compatibility)
             evasion_pred_labels.append(str(pred))
         else:
             # Try to convert to string
