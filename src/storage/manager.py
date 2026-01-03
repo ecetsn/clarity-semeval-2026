@@ -556,4 +556,33 @@ class StorageManager:
             pass  # Silently skip JSON save if it fails
         
         return pkl_path
+    
+    def load_all_results_dict(
+        self,
+        filename: str = 'all_results_dev.pkl'
+    ) -> Dict:
+        """
+        Load all_results dictionary from persistent storage
+        
+        Args:
+            filename: Filename of saved dictionary
+            
+        Returns:
+            Complete results dictionary, or empty dict if not found
+        """
+        import pickle
+        
+        # Try to load from Drive (pkl file)
+        pkl_path = self.data_path / f'results/{filename}'
+        
+        if pkl_path.exists():
+            try:
+                with open(pkl_path, 'rb') as f:
+                    all_results = pickle.load(f)
+                return all_results
+            except Exception as e:
+                print(f"Warning: Could not load {pkl_path}: {e}")
+                return {}
+        else:
+            return {}
 
