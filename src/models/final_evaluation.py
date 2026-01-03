@@ -15,7 +15,7 @@ from .hierarchical import evaluate_hierarchical_approach
 from ..storage.manager import StorageManager
 from ..features.extraction import featurize_hf_dataset_in_batches_v2
 from ..evaluation.metrics import compute_all_metrics, print_classification_report
-from ..evaluation.tables import print_results_table, style_table
+from ..evaluation.tables import print_results_table, style_table, style_table_paper
 from ..evaluation.visualizer import visualize_all_evaluation
 
 
@@ -463,13 +463,14 @@ def run_final_evaluation(
                     # Print unformatted table
                     print(pivot_model.to_string())
                     
-                    # Style and save table
-                    styled_model = style_table(pivot_model, precision=4)
+                    # Style and save table (paper-ready: bold+green for best, italic for hierarchical>clarity)
+                    styled_model = style_table_paper(pivot_model, precision=4)
                     storage.save_table(
                         styled_model,
                         table_name=f'final_test_model_wise_{model_name}',
-                        formats=['csv', 'html', 'png'],
-                        save_dir=str(storage.data_path / 'results/FinalResultsType1/tables')
+                        formats=['csv', 'html', 'png', 'tex', 'md'],
+                        save_dir=str(storage.data_path / 'results/FinalResultsType1/tables'),
+                        use_paper_style=True
                     )
             
             # CLASSIFIER-WISE TABLES: For each classifier, Model × Tasks
@@ -493,13 +494,14 @@ def run_final_evaluation(
                     # Print unformatted table
                     print(pivot_clf.to_string())
                     
-                    # Style and save table
-                    styled_clf = style_table(pivot_clf, precision=4)
+                    # Style and save table (paper-ready: bold+green for best, italic for hierarchical>clarity)
+                    styled_clf = style_table_paper(pivot_clf, precision=4)
                     storage.save_table(
                         styled_clf,
                         table_name=f'final_test_classifier_wise_{clf_name}',
-                        formats=['csv', 'html', 'png'],
-                        save_dir=str(storage.data_path / 'results/FinalResultsType1/tables')
+                        formats=['csv', 'html', 'png', 'tex', 'md'],
+                        save_dir=str(storage.data_path / 'results/FinalResultsType1/tables'),
+                        use_paper_style=True
                     )
             
             # Save all results dictionary
