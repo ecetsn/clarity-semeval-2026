@@ -16,6 +16,39 @@ from .utils import (
 )
 
 
+def get_feature_names() -> List[str]:
+    """
+    Get the list of 19 Context Tree feature names.
+    
+    This function returns the feature names in the correct order, matching
+    the order of features returned by extract_batch_features_v2.
+    
+    Returns:
+        List of 19 feature names (same for all models)
+    """
+    return [
+        "question_model_token_count",
+        "answer_model_token_count",
+        "attention_mass_q_to_a_per_qtoken",
+        "attention_mass_a_to_q_per_atoken",
+        "focus_token_to_answer_strength",
+        "answer_token_to_focus_strength",
+        "focus_token_coverage_ratio",
+        "tfidf_cosine_similarity_q_a",
+        "content_word_jaccard_q_a",
+        "question_content_coverage_in_answer",
+        "answer_content_word_ratio",
+        "answer_digit_groups_per_word",
+        "refusal_pattern_match_count",
+        "clarification_pattern_match_count",
+        "answer_question_mark_count",
+        "answer_word_count",
+        "answer_is_short_question",
+        "answer_negation_ratio",
+        "answer_hedge_ratio",
+    ]
+
+
 def extract_batch_features_v2(
     question_text_list: List[str],
     answer_text_list: List[str],
@@ -201,27 +234,7 @@ def extract_batch_features_v2(
     
     feature_matrix = np.array(feature_rows, dtype=np.float32)
     
-    feature_names = [
-        "question_model_token_count",
-        "answer_model_token_count",
-        "attention_mass_q_to_a_per_qtoken",
-        "attention_mass_a_to_q_per_atoken",
-        "focus_token_to_answer_strength",
-        "answer_token_to_focus_strength",
-        "focus_token_coverage_ratio",
-        "tfidf_cosine_similarity_q_a",
-        "content_word_jaccard_q_a",
-        "question_content_coverage_in_answer",
-        "answer_content_word_ratio",
-        "answer_digit_groups_per_word",
-        "refusal_pattern_match_count",
-        "clarification_pattern_match_count",
-        "answer_question_mark_count",
-        "answer_word_count",
-        "answer_is_short_question",
-        "answer_negation_ratio",
-        "answer_hedge_ratio",
-    ]
+    feature_names = get_feature_names()
     
     return feature_matrix, feature_names, tfidf_vectorizer
 
