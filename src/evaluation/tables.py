@@ -401,7 +401,9 @@ def style_table(
 ) -> 'pd.Styler':
     """
     Style table with color gradients (like siparismaili01)
-    Optionally apply task-specific color coding for comparison
+    Applies comparison-based coloring: Task 1 (clarity) vs Task 3 (hierarchical_evasion_to_clarity)
+    - If Task 1 > Task 3: Task 1 = green, Task 3 = red
+    - If Task 1 < Task 3: Task 1 = red, Task 3 = green
     
     Args:
         df: DataFrame to style
@@ -423,14 +425,86 @@ def style_table(
         if col in df.columns:
             styled = styled.format({col: f"{{:.{precision}f}}"})
     
-    # Apply background gradient to numeric columns
-    if metric_cols:
-        styled = styled.background_gradient(
-            subset=metric_cols,
-            cmap='RdYlGn',  # Red-Yellow-Green gradient
-            vmin=0.0,
-            vmax=1.0
-        )
+    # Check if this is a pivot table with task columns (Task 1 vs Task 3 comparison)
+    task1_col = 'clarity'
+    task3_col = 'hierarchical_evasion_to_clarity'
+    
+    # Handle MultiIndex columns (if tasks are in column level)
+    if isinstance(df.columns, pd.MultiIndex):
+        # Extract task names from MultiIndex columns
+        task_cols_flat = [col[-1] if isinstance(col, tuple) else col for col in df.columns]
+        has_task1 = task1_col in task_cols_flat
+        has_task3 = task3_col in task_cols_flat
+    else:
+        # Simple column names
+        has_task1 = task1_col in df.columns
+        has_task3 = task3_col in df.columns
+    
+    if has_task1 and has_task3:
+        # Apply comparison-based coloring: Task 1 vs Task 3
+        # Create a function to apply colors based on comparison
+        def color_comparison(row):
+            """Apply green/red based on Task 1 vs Task 3 comparison"""
+            colors = [''] * len(row)
+            
+            # Find column indices for Task 1 and Task 3
+            task1_idx = None
+            task3_idx = None
+            
+            for i, col in enumerate(df.columns):
+                # Handle MultiIndex columns
+                if isinstance(df.columns, pd.MultiIndex):
+                    col_name = col[-1] if isinstance(col, tuple) else str(col)
+                else:
+                    col_name = col
+                
+                if col_name == task1_col:
+                    task1_idx = i
+                elif col_name == task3_col:
+                    task3_idx = i
+            
+            if task1_idx is not None and task3_idx is not None:
+                task1_val = row.iloc[task1_idx] if pd.notna(row.iloc[task1_idx]) else None
+                task3_val = row.iloc[task3_idx] if pd.notna(row.iloc[task3_idx]) else None
+                
+                if task1_val is not None and task3_val is not None:
+                    if task1_val > task3_val:
+                        # Task 1 wins: green for Task 1, red for Task 3
+                        colors[task1_idx] = 'background-color: #90EE90'  # Light green
+                        colors[task3_idx] = 'background-color: #FFB6C1'  # Light red
+                    elif task1_val < task3_val:
+                        # Task 3 wins: red for Task 1, green for Task 3
+                        colors[task1_idx] = 'background-color: #FFB6C1'  # Light red
+                        colors[task3_idx] = 'background-color: #90EE90'  # Light green
+                    # If equal, keep default (no special coloring)
+            
+            return colors
+        
+        # Apply comparison-based coloring
+        styled = styled.apply(color_comparison, axis=1)
+        
+        # Also apply gradient to other numeric columns (if any)
+        if isinstance(df.columns, pd.MultiIndex):
+            other_numeric_cols = [col for col in df.columns if col[-1] not in [task1_col, task3_col]]
+        else:
+            other_numeric_cols = [col for col in metric_cols if col not in [task1_col, task3_col]]
+        
+        if other_numeric_cols:
+            styled = styled.background_gradient(
+                subset=other_numeric_cols,
+                cmap='RdYlGn',
+                vmin=0.0,
+                vmax=1.0
+            )
+    else:
+        # No task comparison - apply standard gradient to all numeric columns
+        if metric_cols:
+            styled = styled.background_gradient(
+                subset=metric_cols,
+                cmap='RdYlGn',  # Red-Yellow-Green gradient
+                vmin=0.0,
+                vmax=1.0
+            )
     
     # Add borders and improve readability
     styled = styled.set_table_styles([
