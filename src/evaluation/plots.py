@@ -81,8 +81,17 @@ def plot_precision_recall_curves(
     n_classes = len(label_list)
     
     # Convert labels to indices
+    # Handle label mapping: dataset uses 'Ambivalent' but code expects 'Ambiguous'
+    label_mapping = {'Ambivalent': 'Ambiguous'}  # Map dataset label to expected label
     label_to_idx = {label: idx for idx, label in enumerate(label_list)}
-    y_true_idx = np.array([label_to_idx[label] for label in y_true])
+    
+    # Map y_true labels if needed
+    y_true_mapped = np.array([
+        label_mapping.get(str(label), label) if str(label) in label_mapping else label
+        for label in y_true
+    ])
+    
+    y_true_idx = np.array([label_to_idx[label] for label in y_true_mapped])
     
     plt.figure(figsize=figsize)
     
@@ -143,8 +152,17 @@ def plot_roc_curves(
     n_classes = len(label_list)
     
     # Convert labels to indices
+    # Handle label mapping: dataset uses 'Ambivalent' but code expects 'Ambiguous'
+    label_mapping = {'Ambivalent': 'Ambiguous'}  # Map dataset label to expected label
     label_to_idx = {label: idx for idx, label in enumerate(label_list)}
-    y_true_idx = np.array([label_to_idx[label] for label in y_true])
+    
+    # Map y_true labels if needed
+    y_true_mapped = np.array([
+        label_mapping.get(str(label), label) if str(label) in label_mapping else label
+        for label in y_true
+    ])
+    
+    y_true_idx = np.array([label_to_idx[label] for label in y_true_mapped])
     
     plt.figure(figsize=figsize)
     
