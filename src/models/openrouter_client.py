@@ -50,12 +50,24 @@ class OpenRouterEmbeddingClient:
             "HTTP-Referer": "https://github.com/ecetsn/clarity-semeval-2026",
             "Content-Type": "application/json",
         }
-
         for attempt in range(1, self.max_retries + 1):
             response = requests.post(self.api_url, headers=headers, json=payload, timeout=60)
             if response.status_code == 200:
-                data = response.json()["data"]
-                return np.array([item["embedding"] for item in data], dtype=float)
+                try:
+                    body = response.json()
+                except ValueError:
+                    body = {}
+                data = body.get("data")
+                if data:
+                    return np.array([item["embedding"] for item in data], dtype=float)
+                error_detail = body.get("error") if isinstance(body, dict) else str(body)
+                if attempt == self.max_retries:
+                    raise RuntimeError(
+                        f"OpenRouter embedding returned 200 but no data after {self.max_retries} attempts "
+                        f"(error={error_detail})"
+                    )
+                time.sleep(self.retry_wait * attempt)
+                continue
 
             if attempt == self.max_retries:
                 raise RuntimeError(

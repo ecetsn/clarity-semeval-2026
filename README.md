@@ -47,8 +47,8 @@ Per-model probability vectors are concatenated and passed to a **meta logistic r
 
 The script automatically downloads the QEvasion dataset from Hugging Face, trains all base models, fits the fusion head, and writes artefacts inside `experiments/` as:
 
-* `metrics_experiment_<n>_<base|zero-shot>_<YYYYMMDD>.json`
-* `prediction_test_experiment_<n>_<base|zero-shot>_<YYYYMMDD>.json`
+* `metrics_experiment_<n>_label-<label>_models-<m1+m2>_res-<type>_seed-<seed>_tfidf-rep-<r>_<YYYYMMDD>.json`
+* `prediction_test_experiment_<n>_label-<label>_models-<m1+m2>_res-<type>_seed-<seed>_tfidf-rep-<r>_<YYYYMMDD>.json`
 
 Default configs cap the splits (≈900 train / 256 val / 256 test) so runs finish quickly on CPU. Set the `max_*_samples` fields to `null` once you are ready for full-dataset experiments.
 
@@ -133,10 +133,24 @@ To target the evasion taxonomy, simply change `label_column` to `evasion_label`.
 
 Running the pipeline produces timestamped artifacts directly under `experiments/`, e.g.:
 
-* `metrics_experiment_<n>_<base|zero-shot>_<date>.json` – validation/test accuracy, macro/weighted precision/recall/F1 for every base model and the fusion head. If `paper_reference` is defined, the same file embeds the paper values for quick comparison.
-* `prediction_test_experiment_<n>_<base|zero-shot>_<date>.json` – fused predictions with calibrated probabilities for each test sample.
+* `metrics_experiment_<n>_label-<label>_models-<m1+m2>_res-<type>_seed-<seed>_tfidf-rep-<r>_<date>.json` – validation/test accuracy, macro/weighted precision/recall/F1 for every base model and the fusion head. Filenames carry the label column, model list, resampling strategy, seed, and the tf-idf baseline replica count for easier tracking. If `paper_reference` is defined, the same file embeds the paper values for quick comparison.
+* `prediction_test_experiment_<n>_label-<label>_models-<m1+m2>_res-<type>_seed-<seed>_tfidf-rep-<r>_<date>.json` – fused predictions with calibrated probabilities for each test sample.
 * Optional zero-shot cache files under `experiments/cache/zero_shot/` so repeated runs can reuse previous MNLI scores.
 * If `calibration_fraction > 0`, the metrics file also records the learned temperature used to calibrate the fusion logits on the held-out calibration slice.
+
+## Running TF-IDF/Fusion sweeps
+
+A lightweight grid runner lives at `src/cli/run_sweep_experiments.py` to sweep TF-IDF + fusion settings (ngram ranges, `min_df`, `max_features`, `c`, resampling strategies, and fusion `C`). Example:
+
+```bash
+python -m src.cli.run_sweep_experiments \
+  --config config/ensemble.yaml \
+  --output-dir experiments/sweeps \
+  --replicas 5 \
+  --max-runs 10
+```
+
+Defaults cover `(1,2)/(1,3)` ngrams, `min_df` in {2,3,5}, `max_features` in {20k, 30k, 40k}, TF-IDF `c` in {2,3,4}, resampling {over, under, none}, and fusion `C` in {1,2,4}. Use `--max-runs` to cap the grid if you want a quick scan.
 
 These files are ready to submit/evaluate or to serve as inputs to downstream calibration/analysis notebooks. See `reports/comparison.md` for an example comparison against the SemEval baseline.
 

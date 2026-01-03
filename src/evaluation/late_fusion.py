@@ -121,10 +121,6 @@ class LateFusionExperiment:
             desc = self.paper_reference.get("description", "paper baseline")
             print(f"[LateFusion] Paper reference loaded: {desc}")
 
-        zero_shot_used = any(
-            model_cfg.get("type") == "zero_shot" for model_cfg in self.config.get("base_models", [])
-        )
-
         model_results = []
         per_model_metrics = {}
         for idx, model_cfg in enumerate(self.config.get("base_models", [])):
@@ -212,7 +208,12 @@ class LateFusionExperiment:
             fusion_test_preds,
             fusion_test_probs,
             label_list,
-            zero_shot_used,
+            dataset_cfg.get("label_column"),
+            [m.get("name", f"model_{idx}") for idx, m in enumerate(self.config.get("base_models", []))],
+            (dataset_cfg.get("resampling", {}) or {}).get("type"),
+            dataset_cfg.get("random_seed"),
+            self._tfidf_replicas(),
+            self.config,
         )
         print(f"[LateFusion] Completed run. Artifacts saved to {self.output_dir.resolve()}.")
         return {"base_models": per_model_metrics, "fusion": fusion_metrics}
@@ -226,14 +227,22 @@ class LateFusionExperiment:
         predictions: List[str],
         probabilities: np.ndarray,
         label_list: List[str],
-        zero_shot_used: bool,
+        label_column: Optional[str],
+        model_names: List[str],
+        resampling_type: Optional[str],
+        random_seed: Optional[int],
+        tfidf_replicas: Optional[int],
+        config_snapshot: Dict,
     ) -> None:
         experiment_idx = self._next_experiment_index()
         date_tag = datetime.now().strftime("%Y%m%d")
-        run_tag = "zero-shot" if zero_shot_used else "base"
+        suffix = self._build_run_suffix(
+            label_column, model_names, resampling_type, random_seed, tfidf_replicas
+        )
 
-        metrics_name = f"metrics_experiment_{experiment_idx}_{run_tag}_{date_tag}.json"
-        preds_name = f"prediction_test_experiment_{experiment_idx}_{run_tag}_{date_tag}.json"
+        metrics_name = f"metrics_experiment_{experiment_idx}_{suffix}_{date_tag}.json"
+        preds_name = f"prediction_test_experiment_{experiment_idx}_{suffix}_{date_tag}.json"
+        config_name = f"config_experiment_{experiment_idx}_{suffix}_{date_tag}.json"
 
         metrics_payload = {
             "base_models": base_model_metrics,
@@ -246,6 +255,9 @@ class LateFusionExperiment:
         metrics_path = self.output_dir / metrics_name
         with open(metrics_path, "w", encoding="utf-8") as fp:
             json.dump(metrics_payload, fp, indent=2)
+        config_path = self.output_dir / config_name
+        with open(config_path, "w", encoding="utf-8") as fp:
+            json.dump(config_snapshot, fp, indent=2)
 
         records = []
         for idx, sample_id in enumerate(test_split.ids):
@@ -355,9 +367,21 @@ class LateFusionExperiment:
         if replicas <= 1:
             model = create_model(model_cfg, label_list)
             model.fit(train_split.texts, train_split.labels)
-            val_probs = model.predict_proba(val_split.texts)
-            test_probs = model.predict_proba(test_split.texts)
-            calib_probs = model.predict_proba(calib_split.texts) if calib_split else None
+            val_probs = self._align_probs(
+                model.predict_proba(val_split.texts), getattr(model, "classifier", None), label_list
+            )
+            test_probs = self._align_probs(
+                model.predict_proba(test_split.texts), getattr(model, "classifier", None), label_list
+            )
+            calib_probs = (
+                self._align_probs(
+                    model.predict_proba(calib_split.texts),
+                    getattr(model, "classifier", None),
+                    label_list,
+                )
+                if calib_split
+                else None
+            )
             val_preds = model.predict(val_split.texts)
             test_preds = model.predict(test_split.texts)
             return val_probs, test_probs, calib_probs, val_preds, test_preds
@@ -394,10 +418,24 @@ class LateFusionExperiment:
             )
             model = create_model(model_cfg, label_list)
             model.fit(subset.texts, subset.labels)
-            val_prob_list.append(model.predict_proba(val_split.texts))
-            test_prob_list.append(model.predict_proba(test_split.texts))
+            val_prob_list.append(
+                self._align_probs(
+                    model.predict_proba(val_split.texts), getattr(model, "classifier", None), label_list
+                )
+            )
+            test_prob_list.append(
+                self._align_probs(
+                    model.predict_proba(test_split.texts), getattr(model, "classifier", None), label_list
+                )
+            )
             if calib_split and calib_prob_list is not None:
-                calib_prob_list.append(model.predict_proba(calib_split.texts))
+                calib_prob_list.append(
+                    self._align_probs(
+                        model.predict_proba(calib_split.texts),
+                        getattr(model, "classifier", None),
+                        label_list,
+                    )
+                )
 
         val_probs = self._weighted_average_probs(val_prob_list, weights_array)
         test_probs = self._weighted_average_probs(test_prob_list, weights_array)
@@ -429,6 +467,38 @@ class LateFusionExperiment:
     def _weighted_average_probs(self, prob_list: List[np.ndarray], weights: np.ndarray) -> np.ndarray:
         stacked = np.stack(prob_list, axis=0)  # (m, n, c)
         return np.tensordot(weights, stacked, axes=(0, 0))
+
+    def _align_probs(
+        self, probs: np.ndarray, classifier, label_list: List[str]
+    ) -> np.ndarray:
+        """
+        Aligns model probabilities to the full label_list.
+        If a replica was trained on a subset of classes, insert zero columns for missing labels
+        and renormalize rows to sum to 1 when possible.
+        """
+        num_labels = len(label_list)
+        classes = None
+        if classifier is not None and hasattr(classifier, "classes_"):
+            classes = classifier.classes_
+        if classes is None or len(classes) == num_labels:
+            return probs
+
+        # Map classifier classes to indices in the full label_list.
+        label_to_id = {lbl: idx for idx, lbl in enumerate(label_list)}
+        aligned = np.zeros((probs.shape[0], num_labels), dtype=probs.dtype)
+        for src_idx, cls in enumerate(classes):
+            dest_idx = None
+            if isinstance(cls, (int, np.integer)) and 0 <= cls < num_labels:
+                dest_idx = int(cls)
+            elif cls in label_to_id:
+                dest_idx = label_to_id[cls]
+            if dest_idx is not None:
+                aligned[:, dest_idx] = probs[:, src_idx]
+
+        row_sums = aligned.sum(axis=1)
+        valid = row_sums > 0
+        aligned[valid] /= row_sums[valid, None]
+        return aligned
 
     def _log_metric_summary(self, name: str, metrics: Dict, label_list: List[str]) -> None:
         def short_row(split_name: str):
@@ -488,3 +558,36 @@ class LateFusionExperiment:
         scaled = np.exp(scaled - np.max(scaled, axis=1, keepdims=True))
         scaled /= np.sum(scaled, axis=1, keepdims=True)
         return scaled
+
+    def _build_run_suffix(
+        self,
+        label_column: Optional[str],
+        model_names: List[str],
+        resampling_type: Optional[str],
+        random_seed: Optional[int],
+        tfidf_replicas: Optional[int],
+    ) -> str:
+        label_tag = self._sanitize_tag(label_column or "labels")
+        model_tag = "+".join(self._sanitize_tag(name) for name in model_names) or "models"
+        resampling_tag = self._sanitize_tag(resampling_type or "none")
+        seed_tag = self._sanitize_tag(str(random_seed) if random_seed is not None else "seed")
+        tfidf_tag = (
+            self._sanitize_tag(str(tfidf_replicas))
+            if tfidf_replicas is not None
+            else "tfidf"
+        )
+        return (
+            f"label-{label_tag}_models-{model_tag}_res-{resampling_tag}_"
+            f"seed-{seed_tag}_tfidf-rep-{tfidf_tag}"
+        )
+
+    def _sanitize_tag(self, value: str) -> str:
+        cleaned = "".join(ch if ch.isalnum() or ch in "+-" else "-" for ch in value)
+        cleaned = cleaned.strip("-")
+        return cleaned or "na"
+
+    def _tfidf_replicas(self) -> Optional[int]:
+        for model_cfg in self.config.get("base_models", []):
+            if model_cfg.get("name") == "tfidf_baseline":
+                return int(model_cfg.get("replicas", 1) or 1)
+        return None

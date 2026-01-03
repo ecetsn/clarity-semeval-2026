@@ -10,7 +10,7 @@ dataset:
   max_val_samples: null
   max_test_samples: null
   resampling:
-    type: over          # options: over, under, none/null
+    type: none          # options: over, under, none/null
     random_seed: 42
 
 base_models:
@@ -21,7 +21,8 @@ base_models:
     replica_weights: null        # optional list of floats
     params:
       ngram_range: [1, 2]
-      max_features: 25000
+      max_features: 30000
+      min_df: 3
       c: 3.0
       max_iter: 1000
   - name: tfidf_xgboost
@@ -49,7 +50,7 @@ base_models:
       batch_size: 2
 
 fusion:
-  type: weighted_average # weighted_average for majority voting, logistic_regression for fusion
+  type: logistic_regression # weighted_average for majority voting, logistic_regression for fusion
   params:
     C: 2.0
     max_iter: 1000

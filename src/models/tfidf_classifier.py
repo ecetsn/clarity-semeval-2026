@@ -22,6 +22,7 @@ class TfidfLogisticClassifier(BaseTextClassifier):
         max_features: Optional[int] = 20000,
         c: float = 2.0,
         max_iter: int = 1000,
+        min_df: int = 2,
     ) -> None:
         super().__init__(label_list)
         if isinstance(ngram_range, list):
@@ -30,7 +31,7 @@ class TfidfLogisticClassifier(BaseTextClassifier):
             ngram_range=ngram_range,
             max_features=max_features,
             sublinear_tf=True,
-            min_df=2,
+            min_df=min_df,
         )
         self.classifier = LogisticRegression(
             C=c, max_iter=max_iter, class_weight="balanced"
