@@ -81,23 +81,28 @@ def plot_precision_recall_curves(
     n_classes = len(label_list)
     
     # Convert labels to indices
-    # Handle label mapping: map dataset labels to expected labels
-    # Common mappings: Ambivalent->Ambiguous, Explicit->Direct Answer, etc.
+    # Handle label mapping: Dataset labels match taxonomy, no mapping needed
+    # Dataset labels: 'Clear Reply', 'Ambivalent', 'Clear Non-Reply' (clarity)
+    #                 'Claims ignorance', 'Clarification', 'Declining to answer', 
+    #                 'Deflection', 'Dodging', 'Explicit', 'General', 'Implicit', 'Partial/half-answer' (evasion)
+    # If label_list contains different labels, we map them
     label_mapping = {
-        'Ambivalent': 'Ambiguous',
-        'Explicit': 'Direct Answer',
-        'Implicit': 'Implicit Answer',
-        'Dodging': 'Topic Shift',  # Common mapping
-        'Deflection': 'Topic Shift',
-        'Partial/half-answer': 'Partial Answer',
-        'General': 'Partial Answer',
-        'Declining to answer': 'Refusal',
-        'Claims ignorance': 'Refusal',
-        'Clarification': 'Clarification',
-        'Contradictory': 'Other',
-        'Diffusion': 'Other',
-        'Question': 'Question',
-        'Other': 'Other'
+        # Clarity: dataset uses 'Ambivalent', some code might use 'Ambiguous'
+        'Ambiguous': 'Ambivalent',  # Map 'Ambiguous' to 'Ambivalent' if needed
+        
+        # Evasion: dataset labels are correct, but handle any variations
+        '1.1 Explicit': 'Explicit',  # With taxonomy prefix
+        '1.2 Implicit': 'Implicit',  # With taxonomy prefix
+        '2.1 Dodging': 'Dodging',  # With taxonomy prefix
+        '2.2 Deflection': 'Deflection',  # With taxonomy prefix
+        '2.3 Partial/half-answer': 'Partial/half-answer',  # With taxonomy prefix
+        '2.4 General': 'General',  # With taxonomy prefix
+        '2.6 Declining to answer': 'Declining to answer',  # With taxonomy prefix
+        '2.7 Claims ignorance': 'Claims ignorance',  # With taxonomy prefix
+        '2.8 Clarification': 'Clarification',  # With taxonomy prefix
+        'Partial': 'Partial/half-answer',  # Short form
+        'Ignorance': 'Claims ignorance',  # Short form
+        'Declining': 'Declining to answer',  # Short form
     }
     label_to_idx = {label: idx for idx, label in enumerate(label_list)}
     
@@ -188,23 +193,28 @@ def plot_roc_curves(
     n_classes = len(label_list)
     
     # Convert labels to indices
-    # Handle label mapping: map dataset labels to expected labels
-    # Common mappings: Ambivalent->Ambiguous, Explicit->Direct Answer, etc.
+    # Handle label mapping: Dataset labels match taxonomy, no mapping needed
+    # Dataset labels: 'Clear Reply', 'Ambivalent', 'Clear Non-Reply' (clarity)
+    #                 'Claims ignorance', 'Clarification', 'Declining to answer', 
+    #                 'Deflection', 'Dodging', 'Explicit', 'General', 'Implicit', 'Partial/half-answer' (evasion)
+    # If label_list contains different labels, we map them
     label_mapping = {
-        'Ambivalent': 'Ambiguous',
-        'Explicit': 'Direct Answer',
-        'Implicit': 'Implicit Answer',
-        'Dodging': 'Topic Shift',  # Common mapping
-        'Deflection': 'Topic Shift',
-        'Partial/half-answer': 'Partial Answer',
-        'General': 'Partial Answer',
-        'Declining to answer': 'Refusal',
-        'Claims ignorance': 'Refusal',
-        'Clarification': 'Clarification',
-        'Contradictory': 'Other',
-        'Diffusion': 'Other',
-        'Question': 'Question',
-        'Other': 'Other'
+        # Clarity: dataset uses 'Ambivalent', some code might use 'Ambiguous'
+        'Ambiguous': 'Ambivalent',  # Map 'Ambiguous' to 'Ambivalent' if needed
+        
+        # Evasion: dataset labels are correct, but handle any variations
+        '1.1 Explicit': 'Explicit',  # With taxonomy prefix
+        '1.2 Implicit': 'Implicit',  # With taxonomy prefix
+        '2.1 Dodging': 'Dodging',  # With taxonomy prefix
+        '2.2 Deflection': 'Deflection',  # With taxonomy prefix
+        '2.3 Partial/half-answer': 'Partial/half-answer',  # With taxonomy prefix
+        '2.4 General': 'General',  # With taxonomy prefix
+        '2.6 Declining to answer': 'Declining to answer',  # With taxonomy prefix
+        '2.7 Claims ignorance': 'Claims ignorance',  # With taxonomy prefix
+        '2.8 Clarification': 'Clarification',  # With taxonomy prefix
+        'Partial': 'Partial/half-answer',  # Short form
+        'Ignorance': 'Claims ignorance',  # Short form
+        'Declining': 'Declining to answer',  # Short form
     }
     label_to_idx = {label: idx for idx, label in enumerate(label_list)}
     

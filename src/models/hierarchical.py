@@ -7,9 +7,24 @@ from collections import Counter
 
 
 # Evasion label mappings to Clarity labels
-# Based on siparismaili01 notebook mapping
-NONREPLY = {"Claims ignorance", "Clarification", "Declining to answer"}
-REPLY = {"Explicit"}
+# Based on taxonomy diagram and dataset labels
+# Dataset evasion labels: 'Claims ignorance', 'Clarification', 'Declining to answer', 
+#                          'Deflection', 'Dodging', 'Explicit', 'General', 'Implicit', 'Partial/half-answer'
+# Dataset clarity labels: 'Clear Reply', 'Ambivalent', 'Clear Non-Reply'
+
+# Non-Reply labels (map to "Clear Non-Reply")
+NONREPLY = {
+    "Claims ignorance",
+    "Clarification",
+    "Declining to answer"
+}
+
+# Reply labels (map to "Clear Reply")
+REPLY = {
+    "Explicit"
+}
+
+# All other evasion labels map to "Ambivalent" (Implicit, Dodging, General, Deflection, Partial/half-answer)
 
 
 def evasion_to_clarity(evasion_label: str) -> str:
@@ -50,9 +65,9 @@ def map_evasion_predictions_to_clarity(
     # Map to clarity labels
     clarity_pred_labels = [evasion_to_clarity(ev_label) for ev_label in evasion_pred_labels]
     
-    # Convert back to integers (assuming clarity labels are: Clear Reply=0, Ambiguous=1, Clear Non-Reply=2)
-    # Note: "Ambiguous" is used instead of "Ambivalent" to match dataset labels
-    clarity_label_list = ["Clear Reply", "Ambiguous", "Clear Non-Reply"]
+    # Convert back to integers (assuming clarity labels are: Ambivalent=0, Clear Non-Reply=1, Clear Reply=2)
+    # Note: Dataset uses "Ambivalent" (not "Ambiguous") and order matches dataset: ['Ambivalent', 'Clear Non-Reply', 'Clear Reply']
+    clarity_label_list = ["Ambivalent", "Clear Non-Reply", "Clear Reply"]
     clarity_pred_encoded = np.array([
         clarity_label_list.index(cl_label) if cl_label in clarity_label_list else 1  # Default to Ambiguous if not found
         for cl_label in clarity_pred_labels
