@@ -654,24 +654,37 @@ def style_table_paper(
     styled = styled.apply(apply_cell_styles, axis=1)
     
     # Column alignment: numbers right, text left
-    for col in df_clean.columns:
+    # Use CSS selectors (like style_table) instead of set_properties to avoid KeyError issues
+    # Build alignment styles for numeric columns (right align)
+    alignment_styles = []
+    for i, col in enumerate(df_clean.columns):
         if col in metric_cols:
-            # Numeric columns: right align
-            styled = styled.set_properties(subset=[col], **{'text-align': 'right'})
-        else:
-            # Text columns: left align
-            styled = styled.set_properties(subset=[col], **{'text-align': 'left'})
+            # Numeric columns: right align using nth-child selector
+            # +2 because: +1 for index column (first-child), +1 for 1-based indexing
+            col_selector_idx = i + 2
+            alignment_styles.append({
+                'selector': f'td:nth-child({col_selector_idx})',
+                'props': [('text-align', 'right')]
+            })
+            alignment_styles.append({
+                'selector': f'th:nth-child({col_selector_idx})',
+                'props': [('text-align', 'right')]
+            })
+        # Text columns default to left (handled by table_styles below)
     
     # Note: Index column styling is handled by table_styles below (th:first-child, td:first-child)
-    # No need to use set_properties for index column (avoids KeyError when index.name is None)
     
     # Minimal table styling (clean, professional, NO background colors)
-    styled = styled.set_table_styles([
+    # Combine with alignment styles
+    base_styles = [
         {'selector': 'th', 'props': [('color', '#212529'), ('font-weight', 'bold'), ('border', '1px solid #dee2e6'), ('text-align', 'center')]},
         {'selector': 'td', 'props': [('border', '1px solid #dee2e6'), ('padding', '8px')]},
         {'selector': 'th:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left')]},
         {'selector': 'td:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left')]},
-    ])
+    ]
+    
+    # Apply all styles together
+    styled = styled.set_table_styles(base_styles + alignment_styles)
     
     return styled
 
