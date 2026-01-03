@@ -6,7 +6,7 @@ from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from typing import Dict, Any, Optional
 import numpy as np
 
@@ -109,35 +109,46 @@ def train_classifiers(
     
     Args:
         X_train: Training features (N, F)
-        y_train: Training labels (N,)
+        y_train: Training labels (N,) - can be strings or numeric
         X_dev: Dev features (M, F)
-        y_dev: Dev labels (M,)
+        y_dev: Dev labels (M,) - can be strings or numeric
         classifiers: Dict of classifiers (or None to use default)
         random_state: Random seed
     
     Returns:
         Dictionary mapping classifier_name -> {
             'model': trained_model,
-            'train_pred': predictions on train,
-            'dev_pred': predictions on dev,
+            'train_pred': predictions on train (decoded to original format),
+            'dev_pred': predictions on dev (decoded to original format),
             'train_proba': probabilities on train,
-            'dev_proba': probabilities on dev
+            'dev_proba': probabilities on dev,
+            'label_encoder': LabelEncoder instance (for reference)
         }
     """
     if classifiers is None:
         classifiers = get_classifier_dict(random_state=random_state)
+    
+    # Encode labels to numeric (required for MLPClassifier and some sklearn functions)
+    # This matches the approach in siparismaili01 notebook
+    label_encoder = LabelEncoder()
+    y_train_encoded = label_encoder.fit_transform(y_train)
+    y_dev_encoded = label_encoder.transform(y_dev)
     
     results = {}
     
     for name, clf in classifiers.items():
         print(f"Training {name}...")
         
-        # Train
-        clf.fit(X_train, y_train)
+        # Train with encoded labels
+        clf.fit(X_train, y_train_encoded)
         
-        # Predictions
-        train_pred = clf.predict(X_train)
-        dev_pred = clf.predict(X_dev)
+        # Predictions (encoded)
+        train_pred_encoded = clf.predict(X_train)
+        dev_pred_encoded = clf.predict(X_dev)
+        
+        # Decode predictions back to original label format
+        train_pred = label_encoder.inverse_transform(train_pred_encoded)
+        dev_pred = label_encoder.inverse_transform(dev_pred_encoded)
         
         # Probabilities (if available)
         try:
@@ -153,7 +164,8 @@ def train_classifiers(
             'train_pred': train_pred,
             'dev_pred': dev_pred,
             'train_proba': train_proba,
-            'dev_proba': dev_proba
+            'dev_proba': dev_proba,
+            'label_encoder': label_encoder  # Store encoder for reference
         }
     
     return results
