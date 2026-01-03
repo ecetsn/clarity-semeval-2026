@@ -57,10 +57,26 @@ def plot_confusion_matrix(
     plt.xlabel('Predicted Label')
     plt.tight_layout()
     
+    # Save if path provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    else:
-        plt.show()
+    
+    # Always display in notebook (even if saved)
+    # Use buffer to convert figure to image for notebook display
+    try:
+        from IPython.display import display, Image
+        import io
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        buf.seek(0)
+        display(Image(buf.getvalue()))
+    except (ImportError, Exception):
+        # Not in Jupyter or display failed, try standard show
+        try:
+            plt.show()
+        except:
+            pass  # If show() fails, just continue
+    
     plt.close()
 
 
@@ -170,8 +186,7 @@ def plot_precision_recall_curves(
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    else:
-        plt.show()
+    # Don't display PR/ROC curves in notebook (too many plots, save only)
     plt.close()
 
 
@@ -277,8 +292,7 @@ def plot_roc_curves(
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    else:
-        plt.show()
+    # Don't display PR/ROC curves in notebook (too many plots, save only)
     plt.close()
 
 
@@ -333,7 +347,6 @@ def plot_metrics_comparison(
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    else:
-        plt.show()
+    # Don't display PR/ROC curves in notebook (too many plots, save only)
     plt.close()
 

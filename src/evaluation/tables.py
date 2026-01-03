@@ -4,6 +4,7 @@ Results table creation and printing (like siparismaili01)
 import pandas as pd
 from typing import Dict, List, Any, Optional
 import numpy as np
+from pathlib import Path
 
 
 def create_results_table(
@@ -516,4 +517,231 @@ def style_table(
     ])
     
     return styled
+
+
+def style_table_paper(
+    df: pd.DataFrame,
+    metric_cols: Optional[List[str]] = None,
+    precision: int = 4,
+    clarity_col_name: str = 'clarity',
+    hierarchical_col_name: str = 'hierarchical_evasion_to_clarity'
+) -> 'pd.Styler':
+    """
+    Paper-ready table styling: Minimal, professional, academic-friendly
+    
+    Styling rules:
+    1. Best values (column-wise and row-wise) → Bold + Dark Green
+    2. Hierarchical > Clarity → Italic (no color)
+    3. Others → Normal black
+    
+    Args:
+        df: DataFrame to style
+        metric_cols: List of metric columns (if None, auto-detect numeric)
+        precision: Decimal precision for formatting
+        clarity_col_name: Name of clarity column
+        hierarchical_col_name: Name of hierarchical column
+    
+    Returns:
+        Styled DataFrame (paper-ready)
+    """
+    # Clean up column names: Remove MultiIndex names if present (e.g., "task" header)
+    df_clean = df.copy()
+    if isinstance(df_clean.columns, pd.MultiIndex):
+        # Flatten MultiIndex: keep only the actual column names, remove the level name
+        df_clean.columns = df_clean.columns.get_level_values(-1)
+    # Remove column name if it's just "task" or similar (pivot table artifact)
+    if df_clean.columns.name in ['task', 'Task', 'TASK']:
+        df_clean.columns.name = None
+    
+    # Column name mapping (paper-ready formatting)
+    COLUMN_NAME_MAPPING = {
+        'clarity': 'Clarity',
+        'evasion': 'Evasion',
+        'hierarchical_evasion_to_clarity': 'Hierarchical Mapping to Clarity'
+    }
+    
+    # Apply mapping: use mapping if exists, otherwise capitalize first letter
+    df_clean.columns = df_clean.columns.map(
+        lambda x: COLUMN_NAME_MAPPING.get(str(x).lower(), str(x).title()) if isinstance(x, str) else x
+    )
+    
+    if metric_cols is None:
+        # Auto-detect numeric columns
+        metric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
+    
+    styled = df_clean.style
+    
+    # Format numeric columns
+    for col in metric_cols:
+        if col in df_clean.columns:
+            styled = styled.format({col: f"{{:.{precision}f}}"})
+    
+    # Find clarity and hierarchical columns (after mapping, search in mapped names)
+    clarity_col = None
+    hierarchical_col = None
+    
+    for col in df_clean.columns:
+        col_name = str(col)
+        
+        # Search in mapped column names (e.g., "Clarity", "Hierarchical Mapping to Clarity")
+        if 'clarity' in col_name.lower() and 'hierarchical' not in col_name.lower():
+            clarity_col = col
+        elif 'hierarchical' in col_name.lower() or 'mapping' in col_name.lower():
+            hierarchical_col = col
+    
+    # Find best values: Column-wise (each task's best classifier)
+    column_best = {}
+    for col in metric_cols:
+        if col in df_clean.columns:
+            max_val = df_clean[col].max()
+            column_best[col] = max_val
+    
+    # Find best values: Row-wise (each classifier's best task)
+    row_best = {}
+    for idx in df_clean.index:
+        row_values = []
+        for col in metric_cols:
+            if col in df_clean.columns:
+                val = df_clean.loc[idx, col]
+                if pd.notna(val):
+                    row_values.append(val)
+        if row_values:
+            row_best[idx] = max(row_values)
+    
+    # Apply styling function
+    def apply_cell_styles(row):
+        """Apply paper-ready styling: bold+green for best, italic for hierarchical>clarity"""
+        styles = [''] * len(row)
+        row_idx = row.name
+        
+        for i, val in enumerate(row):
+            # Get column object
+            col_obj = df_clean.columns[i]
+            col_name = str(col_obj)
+            
+            # Check if this is a metric column
+            is_metric_col = col_name in metric_cols or col_obj in metric_cols
+            
+            if is_metric_col and pd.notna(val):
+                style_parts = []
+                
+                # 1. Check if best column-wise (this task's best classifier)
+                if col_name in column_best and abs(val - column_best[col_name]) < 1e-6:
+                    style_parts.append('font-weight: bold')
+                    style_parts.append('color: #006400')  # Dark green
+                
+                # 2. Check if best row-wise (this classifier's best task)
+                if row_idx in row_best and abs(val - row_best[row_idx]) < 1e-6:
+                    style_parts.append('font-weight: bold')
+                    style_parts.append('color: #006400')  # Dark green
+                
+                # 3. Check if hierarchical > clarity (italic)
+                if hierarchical_col is not None and clarity_col is not None:
+                    if col_obj == hierarchical_col:
+                        hierarchical_val = val
+                        clarity_val = row[clarity_col] if clarity_col in row.index else None
+                        
+                        if clarity_val is not None and pd.notna(clarity_val) and pd.notna(hierarchical_val):
+                            if hierarchical_val > clarity_val:
+                                style_parts.append('font-style: italic')
+                
+                if style_parts:
+                    styles[i] = '; '.join(style_parts)
+        
+        return styles
+    
+    # Apply cell styles
+    styled = styled.apply(apply_cell_styles, axis=1)
+    
+    # Column alignment: numbers right, text left
+    for col in df_clean.columns:
+        if col in metric_cols:
+            # Numeric columns: right align
+            styled = styled.set_properties(subset=[col], **{'text-align': 'right'})
+        else:
+            # Text columns: left align
+            styled = styled.set_properties(subset=[col], **{'text-align': 'left'})
+    
+    # First column (index): left align and bold
+    styled = styled.set_properties(subset=[df_clean.index.name] if df_clean.index.name else [], **{'text-align': 'left', 'font-weight': 'bold'})
+    
+    # Minimal table styling (clean, professional, NO background colors)
+    styled = styled.set_table_styles([
+        {'selector': 'th', 'props': [('color', '#212529'), ('font-weight', 'bold'), ('border', '1px solid #dee2e6'), ('text-align', 'center')]},
+        {'selector': 'td', 'props': [('border', '1px solid #dee2e6'), ('padding', '8px')]},
+        {'selector': 'th:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left')]},
+        {'selector': 'td:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left')]},
+    ])
+    
+    return styled
+
+
+def export_table_latex(
+    df: pd.DataFrame,
+    filepath: Path,
+    caption: str = "",
+    label: str = "",
+    precision: int = 4
+) -> None:
+    """
+    Export DataFrame to LaTeX table format (paper-ready)
+    
+    Args:
+        df: DataFrame to export
+        filepath: Path to save .tex file
+        caption: Table caption
+        label: LaTeX label for referencing
+        precision: Decimal precision
+    """
+    # Format numeric columns
+    df_formatted = df.copy()
+    for col in df_formatted.select_dtypes(include=[np.number]).columns:
+        df_formatted[col] = df_formatted[col].apply(lambda x: f"{x:.{precision}f}" if pd.notna(x) else "")
+    
+    # Convert to LaTeX
+    latex_str = df_formatted.to_latex(
+        index=True,
+        caption=caption,
+        label=label,
+        float_format=lambda x: f"{x:.{precision}f}" if pd.notna(x) else "",
+        escape=False
+    )
+    
+    # Save to file
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(latex_str)
+    
+    print(f"Saved LaTeX table: {filepath}")
+
+
+def export_table_markdown(
+    df: pd.DataFrame,
+    filepath: Path,
+    precision: int = 4
+) -> None:
+    """
+    Export DataFrame to Markdown table format (clean, readable)
+    
+    Args:
+        df: DataFrame to export
+        filepath: Path to save .md file
+        precision: Decimal precision
+    """
+    # Format numeric columns
+    df_formatted = df.copy()
+    for col in df_formatted.select_dtypes(include=[np.number]).columns:
+        df_formatted[col] = df_formatted[col].apply(lambda x: f"{x:.{precision}f}" if pd.notna(x) else "")
+    
+    # Convert to Markdown
+    markdown_str = df_formatted.to_markdown(index=True)
+    
+    # Save to file
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(markdown_str)
+    
+    print(f"Saved Markdown table: {filepath}")
 

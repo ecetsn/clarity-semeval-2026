@@ -25,8 +25,19 @@ class SimpleDataset:
     def __len__(self):
         return len(self._data)
     
-    def __getitem__(self, idx):
-        return self._data[idx]
+    def __getitem__(self, idx_or_key):
+        """
+        Support both integer indexing (dataset[0]) and key-based column access (dataset['key']).
+        This mimics HuggingFace Dataset behavior.
+        """
+        if isinstance(idx_or_key, (int, slice)):
+            # Integer indexing: return single sample or slice
+            return self._data[idx_or_key]
+        elif isinstance(idx_or_key, str):
+            # Key-based access: return column (list of values for that key)
+            return [item.get(idx_or_key) for item in self._data]
+        else:
+            raise TypeError(f"Index must be int, slice, or str, got {type(idx_or_key)}")
     
     def __iter__(self):
         return iter(self._data)
@@ -154,14 +165,30 @@ class StorageManager:
         return saved_features
     
     def save_predictions(self, predictions: np.ndarray, model_name: str, classifier: str, 
-                        task: str, split: str) -> Path:
+                        task: str, split: str, save_dir: Optional[str] = None,
+                        metadata_dir: Optional[str] = None) -> Path:
         """
         Save predictions (hard labels)
         - Large file → Drive
         - Metadata → GitHub
+        
+        Args:
+            predictions: Predictions array
+            model_name: Model name
+            classifier: Classifier name
+            task: Task name
+            split: Split name ('train', 'dev', 'test')
+            save_dir: Custom directory for predictions (default: predictions/)
+            metadata_dir: Custom directory for metadata (default: metadata/)
         """
         # Save predictions to Drive
-        npy_path = self.data_path / f'predictions/pred_{split}_{model_name}_{classifier}_{task}.npy'
+        if save_dir is None:
+            npy_path = self.data_path / f'predictions/pred_{split}_{model_name}_{classifier}_{task}.npy'
+        else:
+            save_dir_path = Path(save_dir)
+            save_dir_path.mkdir(parents=True, exist_ok=True)
+            npy_path = save_dir_path / f'pred_{split}_{model_name}_{classifier}_{task}.npy'
+        
         np.save(npy_path, predictions)
         
         # Save metadata to GitHub
@@ -177,7 +204,13 @@ class StorageManager:
             "timestamp": datetime.now().isoformat()
         }
         
-        meta_path = self.github_path / f'metadata/pred_{split}_{model_name}_{classifier}_{task}.json'
+        if metadata_dir is None:
+            meta_path = self.github_path / f'metadata/pred_{split}_{model_name}_{classifier}_{task}.json'
+        else:
+            metadata_dir_path = self.github_path / metadata_dir
+            metadata_dir_path.mkdir(parents=True, exist_ok=True)
+            meta_path = metadata_dir_path / f'pred_{split}_{model_name}_{classifier}_{task}.json'
+        
         with open(meta_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
@@ -465,9 +498,22 @@ class StorageManager:
         
         return split_ds
     
-    def save_results(self, results_dict: Dict, experiment_id: str) -> Path:
-        """Save experiment results to GitHub"""
-        results_path = self.github_path / f'results/{experiment_id}.json'
+    def save_results(self, results_dict: Dict, experiment_id: str, save_dir: Optional[str] = None) -> Path:
+        """
+        Save experiment results to GitHub
+        
+        Args:
+            results_dict: Results dictionary
+            experiment_id: Experiment ID (filename without extension)
+            save_dir: Custom directory for results (default: results/)
+        """
+        if save_dir is None:
+            results_path = self.github_path / f'results/{experiment_id}.json'
+        else:
+            save_dir_path = self.github_path / save_dir
+            save_dir_path.mkdir(parents=True, exist_ok=True)
+            results_path = save_dir_path / f'{experiment_id}.json'
+        
         with open(results_path, 'w') as f:
             json.dump(results_dict, f, indent=2)
         return results_path
@@ -518,16 +564,18 @@ class StorageManager:
         df: Any,
         table_name: str,
         formats: List[str] = ['csv', 'html'],
-        save_dir: Optional[str] = None
+        save_dir: Optional[str] = None,
+        use_paper_style: bool = False
     ) -> Dict[str, Path]:
         """
-        Save DataFrame table in multiple formats (CSV, HTML, PNG)
+        Save DataFrame table in multiple formats (CSV, HTML, PNG, LaTeX, Markdown)
         
         Args:
             df: DataFrame or Styled DataFrame to save
             table_name: Name for the table file (without extension)
-            formats: List of formats to save ('csv', 'html', 'png')
+            formats: List of formats to save ('csv', 'html', 'png', 'tex', 'md')
             save_dir: Directory to save (default: results/tables in data_path)
+            use_paper_style: If True, use paper-ready styling (minimal, professional)
         
         Returns:
             Dict mapping format -> Path to saved file
@@ -544,8 +592,10 @@ class StorageManager:
         # Extract DataFrame if it's a Styler
         if hasattr(df, 'data'):
             df_to_save = df.data
+            styled_df = df  # Keep styled version for HTML
         else:
             df_to_save = df
+            styled_df = None
         
         # Save CSV
         if 'csv' in formats:
@@ -557,8 +607,18 @@ class StorageManager:
         # Save HTML
         if 'html' in formats:
             html_path = save_dir / f'{table_name}.html'
-            if hasattr(df, 'render'):
-                # Styled DataFrame
+            if use_paper_style and styled_df is None:
+                # Apply paper-ready styling
+                from ..evaluation.tables import style_table_paper
+                styled_df = style_table_paper(df_to_save)
+            
+            if styled_df is not None and hasattr(styled_df, 'render'):
+                # Paper-ready styled DataFrame
+                html_content = styled_df.render()
+                with open(html_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+            elif hasattr(df, 'render'):
+                # Original styled DataFrame
                 html_content = df.render()
                 with open(html_path, 'w', encoding='utf-8') as f:
                     f.write(html_content)
@@ -567,6 +627,20 @@ class StorageManager:
                 df_to_save.to_html(html_path, index=True, escape=False)
             saved_paths['html'] = html_path
             print(f"Saved table (HTML): {html_path}")
+        
+        # Save LaTeX
+        if 'tex' in formats or 'latex' in formats:
+            from ..evaluation.tables import export_table_latex
+            tex_path = save_dir / f'{table_name}.tex'
+            export_table_latex(df_to_save, tex_path, caption=f"Results: {table_name.replace('_', ' ').title()}")
+            saved_paths['tex'] = tex_path
+        
+        # Save Markdown
+        if 'md' in formats or 'markdown' in formats:
+            from ..evaluation.tables import export_table_markdown
+            md_path = save_dir / f'{table_name}.md'
+            export_table_markdown(df_to_save, md_path)
+            saved_paths['md'] = md_path
         
         # Save PNG (requires matplotlib)
         if 'png' in formats:
@@ -603,7 +677,8 @@ class StorageManager:
     def save_all_results_dict(
         self,
         all_results: Dict,
-        filename: str = 'all_results.pkl'
+        filename: str = 'all_results.pkl',
+        save_dir: Optional[str] = None
     ) -> Path:
         """
         Save all_results dictionary to persistent storage
@@ -611,12 +686,18 @@ class StorageManager:
         Args:
             all_results: Complete results dictionary
             filename: Filename for saved dictionary
+            save_dir: Custom directory for results dict (default: results/)
         
         Returns:
             Path to saved file
         """
         # Save to Drive (large file)
-        pkl_path = self.data_path / f'results/{filename}'
+        if save_dir is None:
+            pkl_path = self.data_path / f'results/{filename}'
+        else:
+            save_dir_path = self.data_path / save_dir
+            save_dir_path.mkdir(parents=True, exist_ok=True)
+            pkl_path = save_dir_path / filename
         pkl_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(pkl_path, 'wb') as f:

@@ -49,3 +49,7 @@ results/*.xlsx
 !configs/*.yml
 !configs/*.json
 
+# Ignore specific folders
+ece/
+ihsan/
+
