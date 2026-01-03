@@ -396,15 +396,18 @@ def create_classifier_wise_summary_pivot(
 def style_table(
     df: pd.DataFrame,
     metric_cols: Optional[List[str]] = None,
-    precision: int = 4
+    precision: int = 4,
+    task_colors: Optional[Dict[str, str]] = None
 ) -> 'pd.Styler':
     """
     Style table with color gradients (like siparismaili01)
+    Optionally apply task-specific color coding for comparison
     
     Args:
         df: DataFrame to style
         metric_cols: List of metric columns to apply gradient (if None, auto-detect numeric)
         precision: Decimal precision for formatting
+        task_colors: Dict mapping task names to color names (for task-specific styling)
     
     Returns:
         Styled DataFrame

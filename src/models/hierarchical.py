@@ -35,14 +35,14 @@ def evasion_to_clarity(evasion_label: str) -> str:
         evasion_label: Evasion label string
     
     Returns:
-        Clarity label: "Clear Non-Reply", "Clear Reply", or "Ambiguous"
+        Clarity label: "Clear Non-Reply", "Clear Reply", or "Ambivalent"
     """
     if evasion_label in NONREPLY:
         return "Clear Non-Reply"
     if evasion_label in REPLY:
         return "Clear Reply"
-    # Default to "Ambiguous" for all other evasion labels
-    return "Ambiguous"
+    # Default to "Ambivalent" for all other evasion labels (Implicit, Dodging, General, Deflection, Partial/half-answer)
+    return "Ambivalent"
 
 
 def map_evasion_predictions_to_clarity(
@@ -53,14 +53,24 @@ def map_evasion_predictions_to_clarity(
     Map evasion predictions to clarity predictions using hierarchical mapping
     
     Args:
-        evasion_predictions: Array of predicted evasion labels (encoded as integers)
-        evasion_label_list: List of evasion label names (in order of encoding)
+        evasion_predictions: Array of predicted evasion labels (can be integers or strings)
+        evasion_label_list: List of evasion label names (in order of encoding, if predictions are integers)
     
     Returns:
         Array of clarity predictions (encoded as integers)
     """
-    # Convert integer predictions to label strings
-    evasion_pred_labels = [evasion_label_list[int(pred)] for pred in evasion_predictions]
+    # Handle both integer and string predictions
+    evasion_pred_labels = []
+    for pred in evasion_predictions:
+        if isinstance(pred, (int, np.integer)):
+            # Integer prediction: use as index
+            evasion_pred_labels.append(evasion_label_list[int(pred)])
+        elif isinstance(pred, (str, np.str_)):
+            # String prediction: use directly
+            evasion_pred_labels.append(str(pred))
+        else:
+            # Try to convert to string
+            evasion_pred_labels.append(str(pred))
     
     # Map to clarity labels
     clarity_pred_labels = [evasion_to_clarity(ev_label) for ev_label in evasion_pred_labels]
@@ -69,7 +79,7 @@ def map_evasion_predictions_to_clarity(
     # Note: Dataset uses "Ambivalent" (not "Ambiguous") and order matches dataset: ['Ambivalent', 'Clear Non-Reply', 'Clear Reply']
     clarity_label_list = ["Ambivalent", "Clear Non-Reply", "Clear Reply"]
     clarity_pred_encoded = np.array([
-        clarity_label_list.index(cl_label) if cl_label in clarity_label_list else 1  # Default to Ambiguous if not found
+        clarity_label_list.index(cl_label) if cl_label in clarity_label_list else 0  # Default to Ambivalent if not found
         for cl_label in clarity_pred_labels
     ])
     
@@ -87,9 +97,9 @@ def evaluate_hierarchical_approach(
     Evaluate hierarchical approach: evasion predictions -> clarity predictions
     
     Args:
-        y_evasion_true: True evasion labels (encoded)
-        y_evasion_pred: Predicted evasion labels (encoded)
-        y_clarity_true: True clarity labels (encoded)
+        y_evasion_true: True evasion labels (can be encoded integers or strings)
+        y_evasion_pred: Predicted evasion labels (can be encoded integers or strings)
+        y_clarity_true: True clarity labels (can be encoded integers or strings)
         evasion_label_list: List of evasion label names
         clarity_label_list: List of clarity label names
     
