@@ -566,15 +566,25 @@ def style_table_paper(
     )
     
     if metric_cols is None:
-        # Auto-detect numeric columns
+        # Auto-detect numeric columns (AFTER mapping)
         metric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
+    
+    # Convert metric_cols to list of strings to avoid Index object issues after mapping
+    # This ensures column matching works correctly
+    metric_cols_str = [str(col) if not isinstance(col, str) else col for col in metric_cols]
     
     styled = df_clean.style
     
-    # Format numeric columns
-    for col in metric_cols:
-        if col in df_clean.columns:
-            styled = styled.format({col: f"{{:.{precision}f}}"})
+    # Format numeric columns - match by string name
+    for col_str in metric_cols_str:
+        # Find actual column object by string matching
+        for actual_col in df_clean.columns:
+            if str(actual_col) == col_str:
+                try:
+                    styled = styled.format({actual_col: f"{{:.{precision}f}}"})
+                except (KeyError, ValueError):
+                    pass
+                break
     
     # Find clarity and hierarchical columns (after mapping, search in mapped names)
     clarity_col = None
@@ -591,20 +601,32 @@ def style_table_paper(
     
     # Find best values: Column-wise (each task's best classifier)
     column_best = {}
-    for col in metric_cols:
-        if col in df_clean.columns:
-            max_val = df_clean[col].max()
-            column_best[col] = max_val
+    for col_str in metric_cols_str:
+        # Find actual column object by string matching
+        for actual_col in df_clean.columns:
+            if str(actual_col) == col_str:
+                try:
+                    max_val = df_clean[actual_col].max()
+                    column_best[actual_col] = max_val  # Use actual_col as key
+                except (KeyError, ValueError):
+                    pass
+                break
     
     # Find best values: Row-wise (each classifier's best task)
     row_best = {}
     for idx in df_clean.index:
         row_values = []
-        for col in metric_cols:
-            if col in df_clean.columns:
-                val = df_clean.loc[idx, col]
-                if pd.notna(val):
-                    row_values.append(val)
+        for col_str in metric_cols_str:
+            # Find actual column object by string matching
+            for actual_col in df_clean.columns:
+                if str(actual_col) == col_str:
+                    try:
+                        val = df_clean.loc[idx, actual_col]
+                        if pd.notna(val):
+                            row_values.append(val)
+                    except (KeyError, ValueError):
+                        pass
+                    break
         if row_values:
             row_best[idx] = max(row_values)
     
@@ -619,16 +641,18 @@ def style_table_paper(
             col_obj = df_clean.columns[i]
             col_name = str(col_obj)
             
-            # Check if this is a metric column
-            is_metric_col = col_name in metric_cols or col_obj in metric_cols
+            # Check if this is a metric column - use string matching
+            is_metric_col = col_name in metric_cols_str
             
             if is_metric_col and pd.notna(val):
                 style_parts = []
                 
                 # 1. Check if best column-wise (this task's best classifier)
-                if col_name in column_best and abs(val - column_best[col_name]) < 1e-6:
-                    style_parts.append('font-weight: bold')
-                    style_parts.append('color: #006400')  # Dark green
+                # Use actual column object for column_best lookup
+                if col_obj in column_best:
+                    if abs(val - column_best[col_obj]) < 1e-6:
+                        style_parts.append('font-weight: bold')
+                        style_parts.append('color: #006400')  # Dark green
                 
                 # 2. Check if best row-wise (this classifier's best task)
                 if row_idx in row_best and abs(val - row_best[row_idx]) < 1e-6:
