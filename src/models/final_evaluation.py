@@ -9,7 +9,7 @@ from pathlib import Path
 from transformers import AutoTokenizer, AutoModel
 from sklearn.preprocessing import LabelEncoder
 
-from .classifiers import get_classifier_dict
+from .classifiers import get_classifier_dict, train_classifiers
 from .inference import predict_batch_from_dataset
 from .hierarchical import evaluate_hierarchical_approach
 from ..storage.manager import StorageManager
@@ -241,60 +241,38 @@ def run_final_evaluation(
             y_dev = np.array([dev_ds[i][label_key] for i in range(len(dev_ds))])
             y_test = np.array([test_ds[i][label_key] for i in range(len(test_ds))])
             
-            # FIX: Encode labels to numeric (required for MLPClassifier and some sklearn functions)
-            # This matches the approach in train_classifiers() used in 3. notebook
-            label_encoder = LabelEncoder()
-            y_train_encoded = label_encoder.fit_transform(y_train)
-            y_dev_encoded = label_encoder.transform(y_dev)
-            y_test_encoded = label_encoder.transform(y_test)
-            
-            # Ensure encoded labels are numpy arrays (required for MLPClassifier)
-            y_train_encoded = np.asarray(y_train_encoded, dtype=np.int64)
-            y_dev_encoded = np.asarray(y_dev_encoded, dtype=np.int64)
-            y_test_encoded = np.asarray(y_test_encoded, dtype=np.int64)
-            
-            # Combine train+dev (use encoded labels for training)
+            # Combine train+dev (for final training on all available data)
             X_train_full = np.vstack([X_train, X_dev])
-            y_train_full_encoded = np.concatenate([y_train_encoded, y_dev_encoded])
-            
-            # CRITICAL: Ensure y_train_full_encoded is a proper numpy array with integer dtype
-            # MLPClassifier requires numeric (integer) labels, not strings or objects
-            y_train_full_encoded = np.asarray(y_train_full_encoded, dtype=np.int64)
-            
-            # Verify: Check that labels are numeric (for debugging)
-            if not np.issubdtype(y_train_full_encoded.dtype, np.integer):
-                raise ValueError(f"Labels must be integer type for MLPClassifier, got {y_train_full_encoded.dtype}")
+            y_train_full = np.concatenate([y_train, y_dev])
             
             print(f"    Training: {X_train_full.shape[0]} samples (train+dev)")
             print(f"    Testing: {X_test.shape[0]} samples")
             
+            # FIX: Use train_classifiers() function (same as 3. notebook)
+            # This function handles LabelEncoder internally and works correctly with MLP
+            # Pass train_full as train, and test as dev (we only need test predictions)
+            # train_classifiers will handle label encoding automatically
+            training_results = train_classifiers(
+                X_train_full, y_train_full,  # Train on train+dev
+                X_test, y_test,              # Use test as "dev" for predictions
+                classifiers=classifiers,
+                random_state=random_state
+            )
+            
+            # Extract label_encoder from results (same for all classifiers)
+            label_encoder = training_results[list(training_results.keys())[0]]['label_encoder']
+            
             # Train and evaluate
             task_results = {}
             
-            for clf_name, clf in classifiers.items():
+            for clf_name, clf_result in training_results.items():
                 print(f"\n    Training {clf_name}...")
                 
-                # Special handling for MLP: Disable early_stopping to avoid validation score issues
-                # The error occurs in MLPClassifier's internal validation score calculation
-                if clf_name == 'MLP' and hasattr(clf, 'named_steps') and 'clf' in clf.named_steps:
-                    # Temporarily disable early_stopping for MLP
-                    original_early_stopping = clf.named_steps['clf'].early_stopping
-                    clf.named_steps['clf'].early_stopping = False
-                
-                # Train on train+dev (with encoded labels)
-                # Note: y_train_full_encoded is already verified as int64 numpy array
-                try:
-                    clf.fit(X_train_full, y_train_full_encoded)
-                finally:
-                    # Restore original early_stopping setting for MLP
-                    if clf_name == 'MLP' and hasattr(clf, 'named_steps') and 'clf' in clf.named_steps:
-                        clf.named_steps['clf'].early_stopping = original_early_stopping
-                
-                # Predict on test (returns encoded labels)
-                y_test_pred_encoded = clf.predict(X_test)
-                
-                # Decode predictions back to original string labels
-                y_test_pred = label_encoder.inverse_transform(y_test_pred_encoded)
+                # Get trained model and predictions from train_classifiers
+                clf = clf_result['model']
+                # train_classifiers returns predictions on "dev" (which is our test set)
+                y_test_pred = clf_result['dev_pred']  # Already decoded to original labels
+                y_test_proba = clf_result['dev_proba']  # Probabilities on test
                 
                 try:
                     y_test_proba = clf.predict_proba(X_test)
