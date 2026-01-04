@@ -439,6 +439,19 @@ def run_final_evaluation(
             task_name=f"TEST - {model_key} - Hierarchical Evasion→Clarity"
         )
         
+        # Add hierarchical results to final_results for table generation
+        if model_key not in final_results:
+            final_results[model_key] = {}
+        if 'hierarchical_evasion_to_clarity' not in final_results[model_key]:
+            final_results[model_key]['hierarchical_evasion_to_clarity'] = {}
+        
+        # Store hierarchical results in same format as other tasks
+        final_results[model_key]['hierarchical_evasion_to_clarity'][best_classifier] = {
+            'metrics': hierarchical_metrics,
+            'predictions': hierarchical_metrics['predictions'],
+            'probabilities': None  # Hierarchical approach doesn't produce probabilities
+        }
+        
         # Save hierarchical predictions
         if save_results:
             storage.save_predictions(
