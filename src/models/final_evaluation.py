@@ -241,9 +241,16 @@ def run_final_evaluation(
             y_dev = np.array([dev_ds[i][label_key] for i in range(len(dev_ds))])
             y_test = np.array([test_ds[i][label_key] for i in range(len(test_ds))])
             
-            # Combine train+dev
+            # FIX: Encode labels to numeric (required for MLPClassifier and some sklearn functions)
+            # This matches the approach in train_classifiers() used in 3. notebook
+            label_encoder = LabelEncoder()
+            y_train_encoded = label_encoder.fit_transform(y_train)
+            y_dev_encoded = label_encoder.transform(y_dev)
+            y_test_encoded = label_encoder.transform(y_test)
+            
+            # Combine train+dev (use encoded labels for training)
             X_train_full = np.vstack([X_train, X_dev])
-            y_train_full = np.concatenate([y_train, y_dev])
+            y_train_full_encoded = np.concatenate([y_train_encoded, y_dev_encoded])
             
             print(f"    Training: {X_train_full.shape[0]} samples (train+dev)")
             print(f"    Testing: {X_test.shape[0]} samples")
@@ -254,11 +261,14 @@ def run_final_evaluation(
             for clf_name, clf in classifiers.items():
                 print(f"\n    Training {clf_name}...")
                 
-                # Train on train+dev
-                clf.fit(X_train_full, y_train_full)
+                # Train on train+dev (with encoded labels)
+                clf.fit(X_train_full, y_train_full_encoded)
                 
-                # Predict on test
-                y_test_pred = clf.predict(X_test)
+                # Predict on test (returns encoded labels)
+                y_test_pred_encoded = clf.predict(X_test)
+                
+                # Decode predictions back to original string labels
+                y_test_pred = label_encoder.inverse_transform(y_test_pred_encoded)
                 
                 try:
                     y_test_proba = clf.predict_proba(X_test)
