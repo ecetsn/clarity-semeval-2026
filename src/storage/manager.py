@@ -515,13 +515,14 @@ class StorageManager:
             results_path = save_dir_path / f'{experiment_id}.json'
         
         # FIX: Convert numpy arrays and types to JSON-serializable Python types
+        # NumPy 2.0 compatible: use np.floating and np.integer instead of deprecated np.float_, np.int_
         def make_json_serializable(obj):
             """Recursively convert numpy arrays and types to JSON-serializable Python types"""
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
-            elif isinstance(obj, (np.integer, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
+            elif isinstance(obj, np.integer):  # Covers all integer types (int8, int16, int32, int64, etc.)
                 return int(obj)
-            elif isinstance(obj, (np.floating, np.float_, np.float16, np.float32, np.float64)):
+            elif isinstance(obj, np.floating):  # Covers all float types (float16, float32, float64, etc.)
                 return float(obj)
             elif isinstance(obj, (bool, np.bool_)):
                 return bool(obj)
@@ -529,7 +530,7 @@ class StorageManager:
                 return {key: make_json_serializable(value) for key, value in obj.items()}
             elif isinstance(obj, (list, tuple)):
                 return [make_json_serializable(item) for item in obj]
-            elif hasattr(obj, 'item'):  # numpy scalar
+            elif hasattr(obj, 'item'):  # numpy scalar (fallback for any numpy scalar type)
                 return obj.item()
             else:
                 return obj
