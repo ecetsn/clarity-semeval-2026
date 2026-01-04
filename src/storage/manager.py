@@ -514,8 +514,31 @@ class StorageManager:
             save_dir_path.mkdir(parents=True, exist_ok=True)
             results_path = save_dir_path / f'{experiment_id}.json'
         
+        # FIX: Convert numpy arrays and types to JSON-serializable Python types
+        def make_json_serializable(obj):
+            """Recursively convert numpy arrays and types to JSON-serializable Python types"""
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, (np.integer, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float_, np.float16, np.float32, np.float64)):
+                return float(obj)
+            elif isinstance(obj, (bool, np.bool_)):
+                return bool(obj)
+            elif isinstance(obj, dict):
+                return {key: make_json_serializable(value) for key, value in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [make_json_serializable(item) for item in obj]
+            elif hasattr(obj, 'item'):  # numpy scalar
+                return obj.item()
+            else:
+                return obj
+        
+        # Convert results_dict to JSON-serializable format
+        results_serializable = make_json_serializable(results_dict)
+        
         with open(results_path, 'w') as f:
-            json.dump(results_dict, f, indent=2)
+            json.dump(results_serializable, f, indent=2)
         return results_path
     
     def load_metadata(self, model_name: str, task: str, split: str) -> Dict:
