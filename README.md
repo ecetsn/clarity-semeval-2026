@@ -4,7 +4,7 @@ A modular machine learning pipeline for detecting question-answer evasion strate
 
 ## 📋 Overview
 
-This project implements a comprehensive pipeline for the **SemEval-2024 Task 1: Question-Answer Evasion Detection** competition. It extracts **19 Context Tree features** from question-answer pairs using multiple transformer models and performs classification on two main tasks:
+This project implements a comprehensive pipeline for the **SemEval-2024 Task 1: Question-Answer Evasion Detection** competition. It extracts **25 Context Tree features** from question-answer pairs using multiple transformer models and performs classification on two main tasks:
 
 1. **Clarity Task**: Classify answer clarity (3 classes)
    - Clear Reply
@@ -54,7 +54,7 @@ semeval-context-tree-modular/
 - `splits/dataset_splits_{task}.pkl` (task-specific splits)
 
 ### 3. Feature Extraction (`02_feature_extraction_separate.ipynb`)
-Extract 19 Context Tree features for each transformer model separately.
+Extract 25 Context Tree features for each transformer model separately.
 
 **Models**:
 - BERT (bert-base-uncased)
@@ -64,7 +64,7 @@ Extract 19 Context Tree features for each transformer model separately.
 - DeBERTa (microsoft/deberta-v3-base)
 - XLNet (xlnet-base-cased)
 
-**19 Context Tree Features**:
+**25 Context Tree Features**:
 
 1. **Length Features (2)**:
    - `question_model_token_count`
@@ -99,6 +99,18 @@ Extract 19 Context Tree features for each transformer model separately.
    - `answer_negation_ratio`
    - `answer_hedge_ratio`
 
+8. **Sentiment Features (2)** - NEW:
+   - `question_sentiment_polarity`
+   - `answer_sentiment_polarity`
+
+9. **Structural Features (1)** - NEW:
+   - `answer_char_per_sentence`
+
+10. **Metadata Features (3)** - NEW:
+    - `inaudible`
+    - `multiple_questions`
+    - `affirmative_questions`
+
 **Outputs**:
 - `features/raw/X_{split}_{model}_{task}.npy` (feature matrices)
 - `metadata/features_{split}_{model}_{task}.json` (feature metadata)
@@ -131,12 +143,12 @@ Comprehensive feature ablation study to identify optimal feature subsets.
 **Scope**:
 - 3 Tasks: Clarity, Evasion, Hierarchical Evasion → Clarity
 - 6 Models × 6 Classifiers = 36 combinations per task
-- 19 Features evaluated individually
+- 25 Features evaluated individually
 
 **Workflow**:
 
 1. **Single-Feature Ablation**: Evaluate each feature individually across all 36 model×classifier combinations
-   - Total evaluations: 3 tasks × 6 models × 6 classifiers × 19 features = **2,052 evaluations**
+   - Total evaluations: 3 tasks × 6 models × 6 classifiers × 25 features = **2,700 evaluations**
    - Each feature is trained and evaluated separately
 
 2. **Statistical Aggregation**: Compute statistics for each feature:
@@ -214,12 +226,12 @@ Manages data storage: GitHub for metadata, Google Drive for large files.
 - `save_probabilities()` / `load_probabilities()`: Probability distributions
 
 ### `src/features/extraction.py` - Feature Extraction
-Extracts 19 Context Tree features from question-answer pairs.
+Extracts 25 Context Tree features from question-answer pairs.
 
 **Key Functions**:
 - `extract_batch_features_v2()`: Extract features from a batch
 - `featurize_hf_dataset_in_batches_v2()`: Process entire dataset in batches
-- `get_feature_names()`: Returns list of 19 feature names
+- `get_feature_names()`: Returns list of 25 feature names
 
 ### `src/models/trainer.py` - Model Training
 Trains classifiers and evaluates on dev set.
@@ -258,7 +270,7 @@ Train/Dev/Test Splits (task-specific)
     ↓
 02_feature_extraction_separate.ipynb
     ↓
-19 Context Tree Features (per model)
+25 Context Tree Features (per model)
     ↓
 03_train_evaluate.ipynb
     ↓
@@ -285,6 +297,11 @@ Final Test Set Results
 4. **Label Encoding**: String labels converted to numeric (required for some classifiers)
 5. **Storage Management**: Large files in Google Drive, metadata in GitHub
 6. **Reproducibility**: All random seeds fixed to 42
+   - Python random, NumPy, PyTorch, and HuggingFace Transformers seeds set to 42
+   - PyTorch deterministic mode enabled for full reproducibility
+   - Classifiers use `random_state=42`
+   - Data splits use `seed=42`
+   - Each notebook has a reproducibility setup cell that must be run first
 
 ## 📝 Usage
 
