@@ -88,30 +88,30 @@ def run_final_evaluation(
     # CRITICAL: Create ALL output directories upfront to prevent FileNotFoundError
     # This ensures all directories exist before any save operations
     # Only for FinalResultsType1 (5. notebook), not affecting other notebooks
+    # Always create directories (exist_ok=True makes it safe)
     # ========================================================================
-    if save_results or create_plots:
-        # Drive directories (for large files: plots, predictions, tables, results)
-        plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
-        predictions_dir = storage.data_path / 'results/FinalResultsType1/predictions'
-        tables_dir = storage.data_path / 'results/FinalResultsType1/tables'
-        results_dir = storage.data_path / 'results/FinalResultsType1'
-        
-        # GitHub directories (for metadata: JSON results)
-        metadata_results_dir = storage.github_path / 'results/FinalResultsType1Results'
-        
-        # Create all directories
-        plots_dir.mkdir(parents=True, exist_ok=True)
-        predictions_dir.mkdir(parents=True, exist_ok=True)
-        tables_dir.mkdir(parents=True, exist_ok=True)
-        results_dir.mkdir(parents=True, exist_ok=True)
-        metadata_results_dir.mkdir(parents=True, exist_ok=True)
-        
-        print("Created all output directories:")
-        print(f"  Drive: {plots_dir}")
-        print(f"  Drive: {predictions_dir}")
-        print(f"  Drive: {tables_dir}")
-        print(f"  Drive: {results_dir}")
-        print(f"  GitHub: {metadata_results_dir}")
+    # Drive directories (for large files: plots, predictions, tables, results)
+    plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
+    predictions_dir = storage.data_path / 'results/FinalResultsType1/predictions'
+    tables_dir = storage.data_path / 'results/FinalResultsType1/tables'
+    results_dir = storage.data_path / 'results/FinalResultsType1'
+    
+    # GitHub directories (for metadata: JSON results)
+    metadata_results_dir = storage.github_path / 'results/FinalResultsType1Results'
+    
+    # Create all directories (always, to prevent any FileNotFoundError)
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    predictions_dir.mkdir(parents=True, exist_ok=True)
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    metadata_results_dir.mkdir(parents=True, exist_ok=True)
+    
+    print("Created all output directories:")
+    print(f"  Drive: {plots_dir}")
+    print(f"  Drive: {predictions_dir}")
+    print(f"  Drive: {tables_dir}")
+    print(f"  Drive: {results_dir}")
+    print(f"  GitHub: {metadata_results_dir}")
     
     print("="*80)
     print("FINAL EVALUATION: YARIŞMAYA UYGUN TEK FONKSİYON")
