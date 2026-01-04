@@ -365,78 +365,93 @@ def run_final_evaluation(
                 }, experiment_id, save_dir='results/FinalResultsType1Results')
             
             # ========================================================================
-            # ADDITIONAL: For evasion task, evaluate against annotator1, annotator2, annotator3
+            # ADDITIONAL: For evasion task, map annotator1/2/3 labels to clarity and evaluate
             # ========================================================================
             if task == 'evasion':
-                print(f"\n  Additional Evaluations: Annotator1, Annotator2, Annotator3")
+                print(f"\n  Additional Evaluations: Annotator1/2/3 → Clarity Mapping")
                 
                 # Extract annotator labels from test dataset
                 try:
-                    y_annotator1 = np.array([test_ds[i]['annotator1'] for i in range(len(test_ds))])
-                    y_annotator2 = np.array([test_ds[i]['annotator2'] for i in range(len(test_ds))])
-                    y_annotator3 = np.array([test_ds[i]['annotator3'] for i in range(len(test_ds))])
+                    y_annotator1_evasion = np.array([test_ds[i]['annotator1'] for i in range(len(test_ds))])
+                    y_annotator2_evasion = np.array([test_ds[i]['annotator2'] for i in range(len(test_ds))])
+                    y_annotator3_evasion = np.array([test_ds[i]['annotator3'] for i in range(len(test_ds))])
+                    # Get true clarity labels for evaluation
+                    y_clarity_true_test = np.array([test_ds[i]['clarity_label'] for i in range(len(test_ds))])
                 except KeyError as e:
                     print(f"    WARNING: Could not find annotator columns in test dataset: {e}")
                     print(f"    Skipping annotator evaluations...")
                     continue
                 
-                # Evaluate each classifier's predictions against each annotator
-                for annotator_name, y_annotator_true in [
-                    ('annotator1', y_annotator1),
-                    ('annotator2', y_annotator2),
-                    ('annotator3', y_annotator3)
+                # Encode clarity labels for evaluation
+                from sklearn.preprocessing import LabelEncoder
+                le_clarity = LabelEncoder()
+                y_clarity_true_encoded = le_clarity.fit_transform(y_clarity_true_test)
+                
+                # Import mapping function
+                from .hierarchical import evasion_to_clarity, evaluate_hierarchical_approach
+                
+                # Evaluate each annotator's labels mapped to clarity
+                for annotator_name, y_annotator_evasion in [
+                    ('annotator1_based_clarity', y_annotator1_evasion),
+                    ('annotator2_based_clarity', y_annotator2_evasion),
+                    ('annotator3_based_clarity', y_annotator3_evasion)
                 ]:
-                    print(f"\n    Evaluating against {annotator_name}...")
+                    print(f"\n    Evaluating {annotator_name} (annotator evasion → clarity mapping)...")
+                    
+                    # Map annotator's evasion labels to clarity for comparison (outside classifier loop)
+                    # (This is the "gold standard" clarity from this annotator)
+                    y_annotator_clarity_mapped = np.array([
+                        evasion_to_clarity(str(ev_label)) for ev_label in y_annotator_evasion
+                    ])
+                    y_annotator_clarity_encoded = le_clarity.transform(y_annotator_clarity_mapped)
                     
                     annotator_results = {}
                     
+                    # For each classifier, map its evasion predictions to clarity and evaluate
                     for clf_name, clf_result in task_results.items():
-                        # Use same predictions as evasion_label evaluation
-                        y_test_pred = clf_result['predictions']
-                        y_test_proba = clf_result.get('probabilities')  # Same probabilities
+                        # Get evasion predictions (string labels)
+                        y_evasion_pred = clf_result['predictions']
                         
-                        # Compute metrics against this annotator's labels
+                        # Map evasion predictions to clarity using hierarchical mapping
+                        hierarchical_metrics = evaluate_hierarchical_approach(
+                            np.zeros(len(y_evasion_pred), dtype=int),  # Dummy evasion_true (not used)
+                            y_evasion_pred,  # Evasion predictions (string labels)
+                            y_clarity_true_encoded,  # True clarity labels (encoded)
+                            label_lists['evasion'],
+                            label_lists['clarity']
+                        )
+                        
+                        # Evaluate mapped predictions against annotator's mapped clarity labels
                         annotator_metrics = compute_all_metrics(
-                            y_annotator_true, y_test_pred, label_list,
+                            y_annotator_clarity_encoded, 
+                            hierarchical_metrics['predictions'], 
+                            label_lists['clarity'],
                             task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
                         )
                         
                         # 1. Print classification report first
                         print_classification_report(
-                            y_annotator_true, y_test_pred, label_list,
+                            y_annotator_clarity_encoded, 
+                            hierarchical_metrics['predictions'], 
+                            label_lists['clarity'],
                             task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
                         )
                         
                         # 2. Show confusion matrix immediately after report
                         if create_plots:
                             from ..evaluation.plots import plot_confusion_matrix
-                            # Directory already created at function start
                             plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
                             plot_confusion_matrix(
-                                y_annotator_true, y_test_pred, label_list,
+                                y_annotator_clarity_encoded, 
+                                hierarchical_metrics['predictions'], 
+                                label_lists['clarity'],
                                 task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
                                 save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
                             )
                         
-                        # 3. Create other plots (PR/ROC) - save only, don't display (to avoid clutter)
-                        if create_plots and y_test_proba is not None:
-                            from ..evaluation.plots import plot_precision_recall_curves, plot_roc_curves
-                            # Directory already created at function start
-                            plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
-                            plot_precision_recall_curves(
-                                y_annotator_true, y_test_proba, label_list,
-                                task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
-                                save_path=str(plots_dir / f'precision_recall_{clf_name}_TEST_{model_key}_{annotator_name}.png')
-                            )
-                            plot_roc_curves(
-                                y_annotator_true, y_test_proba, label_list,
-                                task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
-                                save_path=str(plots_dir / f'roc_{clf_name}_TEST_{model_key}_{annotator_name}.png')
-                            )
-                        
                         annotator_results[clf_name] = {
-                            'predictions': y_test_pred,  # Same predictions
-                            'probabilities': y_test_proba,  # Same probabilities
+                            'predictions': hierarchical_metrics['predictions'],  # Clarity predictions
+                            'probabilities': None,  # No probabilities for mapping-based approach
                             'metrics': annotator_metrics
                         }
                     
@@ -457,7 +472,7 @@ def run_final_evaluation(
                             'split': 'test',
                             'model': model_key,
                             'task': annotator_name,
-                            'n_test': len(y_annotator_true),
+                            'n_test': len(y_annotator_clarity_encoded),
                             'results': {
                                 name: {'metrics': res['metrics']}
                                 for name, res in annotator_results.items()
@@ -500,23 +515,25 @@ def run_final_evaluation(
         test_ds_evasion = storage.load_split('test', task='evasion')
         
         # Get predictions and true labels
-        y_evasion_pred_test = evasion_results[best_classifier]['predictions']
+        y_evasion_pred_test = evasion_results[best_classifier]['predictions']  # String labels
         y_evasion_true_test = np.array([test_ds_evasion[i]['evasion_label'] for i in range(len(test_ds_evasion))])
         y_clarity_true_test = np.array([test_ds_evasion[i]['clarity_label'] for i in range(len(test_ds_evasion))])
         
-        # Encode labels
+        # Encode labels (only for true labels, predictions stay as strings)
         le_evasion = LabelEncoder()
         le_clarity = LabelEncoder()
         
         y_evasion_true_encoded = le_evasion.fit_transform(y_evasion_true_test)
         y_clarity_true_encoded = le_clarity.fit_transform(y_clarity_true_test)
-        y_evasion_pred_encoded = le_evasion.transform(y_evasion_pred_test)
+        # NOTE: y_evasion_pred_test is already string labels, no need to encode
+        # evaluate_hierarchical_approach handles string labels directly
         
         # Evaluate hierarchical approach
+        # Pass string predictions directly (same as 3. notebook)
         hierarchical_metrics = evaluate_hierarchical_approach(
-            y_evasion_true_encoded,
-            y_evasion_pred_encoded,
-            y_clarity_true_encoded,
+            y_evasion_true_encoded,  # Encoded (not used in mapping, only for signature)
+            y_evasion_pred_test,      # String labels - function handles both string and int
+            y_clarity_true_encoded,   # Encoded integers
             label_lists['evasion'],
             label_lists['clarity']
         )
@@ -542,11 +559,11 @@ def run_final_evaluation(
         # Add hierarchical results to final_results for table generation
         if model_key not in final_results:
             final_results[model_key] = {}
-        if 'hierarchical_evasion_to_clarity' not in final_results[model_key]:
-            final_results[model_key]['hierarchical_evasion_to_clarity'] = {}
+        if 'evasion_based_clarity' not in final_results[model_key]:
+            final_results[model_key]['evasion_based_clarity'] = {}
         
         # Store hierarchical results in same format as other tasks
-        final_results[model_key]['hierarchical_evasion_to_clarity'][best_classifier] = {
+        final_results[model_key]['evasion_based_clarity'][best_classifier] = {
             'metrics': hierarchical_metrics,
             'predictions': hierarchical_metrics['predictions'],
             'probabilities': None  # Hierarchical approach doesn't produce probabilities
@@ -556,16 +573,16 @@ def run_final_evaluation(
         if save_results:
             storage.save_predictions(
                 hierarchical_metrics['predictions'],
-                model_key, best_classifier, 'hierarchical_evasion_to_clarity', 'test',
+                model_key, best_classifier, 'evasion_based_clarity', 'test',
                 save_dir=str(storage.data_path / 'results/FinalResultsType1/predictions'),
                 metadata_dir='results/FinalResultsType1Results'
             )
             
-            experiment_id = f"FINAL_TEST_{model_key}_hierarchical_evasion_to_clarity"
+            experiment_id = f"FINAL_TEST_{model_key}_evasion_based_clarity"
             storage.save_results({
                 'split': 'test',
                 'model': model_key,
-                'task': 'hierarchical_evasion_to_clarity',
+                'task': 'evasion_based_clarity',
                 'n_test': len(y_clarity_true_test),
                 'evasion_classifier': best_classifier,
                 'evasion_f1': best_f1,
@@ -584,10 +601,11 @@ def run_final_evaluation(
         
         # Collect all results for summary
         summary_rows = []
-        # Include original tasks, hierarchical task, and annotator tasks (if they exist)
-        all_tasks = tasks + ['hierarchical_evasion_to_clarity']
-        # Add annotator tasks if they exist in results (only for evasion task)
-        annotator_tasks = ['annotator1', 'annotator2', 'annotator3']
+        # Include clarity task and all clarity-based tasks (evasion_based_clarity + annotator-based clarity)
+        # Remove 'evasion' from tasks list (it's only used for training, not shown in tables)
+        all_tasks = ['clarity', 'evasion_based_clarity']
+        # Add annotator-based clarity tasks if they exist in results
+        annotator_tasks = ['annotator1_based_clarity', 'annotator2_based_clarity', 'annotator3_based_clarity']
         # Check if any model has annotator results (they will be added dynamically)
         for model_key in models:
             if model_key in final_results:

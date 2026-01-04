@@ -396,8 +396,8 @@ def style_table(
     """
     Style table with custom coloring rules:
     - Default: Gray background (except header row and first column which stay blue)
-    - If hierarchical_evasion_to_clarity > clarity: Green background
-    - If hierarchical_evasion_to_clarity <= clarity: Gray background
+    - If evasion_based_clarity > clarity: Green background
+    - If evasion_based_clarity <= clarity: Gray background
     - Row with highest Macro F1: Bold font for entire row
     
     Args:
@@ -420,7 +420,7 @@ def style_table(
         if col in df.columns:
             styled = styled.format({col: f"{{:.{precision}f}}"})
     
-    # Find clarity and hierarchical_evasion_to_clarity columns
+    # Find clarity and evasion_based_clarity columns
     clarity_col = None
     hierarchical_col = None
     
@@ -433,7 +433,7 @@ def style_table(
         
         if col_name == 'clarity':
             clarity_col = col
-        elif col_name == 'hierarchical_evasion_to_clarity':
+        elif col_name == 'evasion_based_clarity':
             hierarchical_col = col
     
     # Find row with highest Macro F1 (check clarity column first, then hierarchical)
@@ -516,7 +516,7 @@ def style_table_paper(
     metric_cols: Optional[List[str]] = None,
     precision: int = 4,
     clarity_col_name: str = 'clarity',
-    hierarchical_col_name: str = 'hierarchical_evasion_to_clarity',
+    hierarchical_col_name: str = 'evasion_based_clarity',
     apply_column_mapping: bool = False,
     best_direction: str = 'auto',  # 'auto', 'column', 'row'
     table_name: Optional[str] = None  # NEW: Table name for auto-detection (e.g., 'model_wise_bert', 'classifier_wise_LightGBM')
@@ -580,7 +580,7 @@ def style_table_paper(
         COLUMN_NAME_MAPPING = {
             'clarity': 'Clarity',
             'evasion': 'Evasion',
-            'hierarchical_evasion_to_clarity': 'Hierarchical Mapping to Clarity'
+            'evasion_based_clarity': 'EvasionBasedClarity Mapping'
         }
         # Apply mapping: use mapping if exists, otherwise capitalize first letter
         df_clean.columns = df_clean.columns.map(
