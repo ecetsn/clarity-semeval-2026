@@ -363,6 +363,106 @@ def run_final_evaluation(
                         for name, res in task_results.items()
                     }
                 }, experiment_id, save_dir='results/FinalResultsType1Results')
+            
+            # ========================================================================
+            # ADDITIONAL: For evasion task, evaluate against annotator1, annotator2, annotator3
+            # ========================================================================
+            if task == 'evasion':
+                print(f"\n  Additional Evaluations: Annotator1, Annotator2, Annotator3")
+                
+                # Extract annotator labels from test dataset
+                try:
+                    y_annotator1 = np.array([test_ds[i]['annotator1'] for i in range(len(test_ds))])
+                    y_annotator2 = np.array([test_ds[i]['annotator2'] for i in range(len(test_ds))])
+                    y_annotator3 = np.array([test_ds[i]['annotator3'] for i in range(len(test_ds))])
+                except KeyError as e:
+                    print(f"    WARNING: Could not find annotator columns in test dataset: {e}")
+                    print(f"    Skipping annotator evaluations...")
+                    continue
+                
+                # Evaluate each classifier's predictions against each annotator
+                for annotator_name, y_annotator_true in [
+                    ('annotator1', y_annotator1),
+                    ('annotator2', y_annotator2),
+                    ('annotator3', y_annotator3)
+                ]:
+                    print(f"\n    Evaluating against {annotator_name}...")
+                    
+                    annotator_results = {}
+                    
+                    for clf_name, clf_result in task_results.items():
+                        # Use same predictions as evasion_label evaluation
+                        y_test_pred = clf_result['predictions']
+                        y_test_proba = clf_result.get('probabilities')  # Same probabilities
+                        
+                        # Compute metrics against this annotator's labels
+                        annotator_metrics = compute_all_metrics(
+                            y_annotator_true, y_test_pred, label_list,
+                            task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
+                        )
+                        
+                        # 1. Print classification report first
+                        print_classification_report(
+                            y_annotator_true, y_test_pred, label_list,
+                            task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
+                        )
+                        
+                        # 2. Show confusion matrix immediately after report
+                        if create_plots:
+                            from ..evaluation.plots import plot_confusion_matrix
+                            # Directory already created at function start
+                            plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
+                            plot_confusion_matrix(
+                                y_annotator_true, y_test_pred, label_list,
+                                task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
+                                save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
+                            )
+                        
+                        # 3. Create other plots (PR/ROC) - save only, don't display (to avoid clutter)
+                        if create_plots and y_test_proba is not None:
+                            from ..evaluation.plots import plot_precision_recall_curves, plot_roc_curves
+                            # Directory already created at function start
+                            plots_dir = storage.data_path / 'results/FinalResultsType1/plots'
+                            plot_precision_recall_curves(
+                                y_annotator_true, y_test_proba, label_list,
+                                task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
+                                save_path=str(plots_dir / f'precision_recall_{clf_name}_TEST_{model_key}_{annotator_name}.png')
+                            )
+                            plot_roc_curves(
+                                y_annotator_true, y_test_proba, label_list,
+                                task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
+                                save_path=str(plots_dir / f'roc_{clf_name}_TEST_{model_key}_{annotator_name}.png')
+                            )
+                        
+                        annotator_results[clf_name] = {
+                            'predictions': y_test_pred,  # Same predictions
+                            'probabilities': y_test_proba,  # Same probabilities
+                            'metrics': annotator_metrics
+                        }
+                    
+                    # Print comparison table for this annotator
+                    print_results_table(
+                        {name: {'metrics': res['metrics']} for name, res in annotator_results.items()},
+                        task_name=f"TEST - {model_key} - {annotator_name}",
+                        sort_by="Macro F1"
+                    )
+                    
+                    # Store results in final_results (will appear in summary tables)
+                    final_results[model_key][annotator_name] = annotator_results
+                    
+                    # Save results metadata
+                    if save_results:
+                        experiment_id = f"FINAL_TEST_{model_key}_{annotator_name}"
+                        storage.save_results({
+                            'split': 'test',
+                            'model': model_key,
+                            'task': annotator_name,
+                            'n_test': len(y_annotator_true),
+                            'results': {
+                                name: {'metrics': res['metrics']}
+                                for name, res in annotator_results.items()
+                            }
+                        }, experiment_id, save_dir='results/FinalResultsType1Results')
     
     # ========================================================================
     # ADIM 3: Hierarchical Evaluation (Evasion → Clarity)
@@ -484,7 +584,16 @@ def run_final_evaluation(
         
         # Collect all results for summary
         summary_rows = []
+        # Include original tasks, hierarchical task, and annotator tasks (if they exist)
         all_tasks = tasks + ['hierarchical_evasion_to_clarity']
+        # Add annotator tasks if they exist in results (only for evasion task)
+        annotator_tasks = ['annotator1', 'annotator2', 'annotator3']
+        # Check if any model has annotator results (they will be added dynamically)
+        for model_key in models:
+            if model_key in final_results:
+                for annotator_task in annotator_tasks:
+                    if annotator_task in final_results[model_key] and annotator_task not in all_tasks:
+                        all_tasks.append(annotator_task)
         
         for model_key in models:
             if model_key not in final_results:
