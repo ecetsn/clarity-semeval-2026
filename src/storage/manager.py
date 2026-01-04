@@ -61,7 +61,7 @@ class StorageManager:
         
         # Create directories for data (Drive)
         for dir_name in [
-            'features/raw', 'features/fused', 'features/probabilities',
+            'features/raw', 'features/fused', 'features/probabilities', 'features/model_independent',
             'models/classifiers', 'models/fusion',
             'predictions', 'results', 'checkpoints', 'splits'
         ]:
@@ -163,6 +163,79 @@ class StorageManager:
             saved_features[(model, task, split)] = str(npy_file)
         
         return saved_features
+    
+    def save_model_independent_features(
+        self, 
+        X: np.ndarray, 
+        split: str, 
+        feature_names: List[str],
+        task: str = 'clarity',  # Task-specific: clarity and evasion have different splits
+        question_key: str = "question"
+    ) -> Path:
+        """
+        Save model-independent features (1 kez çıkar, tüm modeller için kullan)
+        Task-specific because clarity and evasion have different splits
+        
+        Args:
+            X: Feature matrix (N, 18) - model-independent features
+            split: Split name ('train', 'dev', 'test')
+            feature_names: List of 18 feature names
+            task: Task name ('clarity' or 'evasion') - determines which split file to save
+            question_key: Question key used (for metadata)
+        
+        Returns:
+            Path to saved numpy file
+        """
+        # Save numpy array to Drive (task-specific)
+        npy_path = self.data_path / f'features/model_independent/X_{split}_{task}_independent.npy'
+        npy_path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(npy_path, X)
+        
+        # Save metadata to GitHub
+        metadata = {
+            "type": "model_independent_features",
+            "split": split,
+            "task": task,
+            "question_key": question_key,
+            "shape": list(X.shape),
+            "n_features": len(feature_names),
+            "feature_names": feature_names,
+            "data_path": str(npy_path),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        meta_path = self.github_path / f'metadata/features_independent_{split}_{task}.json'
+        with open(meta_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"Saved model-independent features: {npy_path}")
+        print(f"Saved metadata: {meta_path}")
+        return npy_path
+    
+    def load_model_independent_features(self, split: str, task: str = 'clarity') -> np.ndarray:
+        """
+        Load model-independent features (1 kez çıkar, tüm modeller için kullan)
+        Task-specific because clarity and evasion have different splits
+        
+        Args:
+            split: Split name ('train', 'dev', 'test')
+            task: Task name ('clarity' or 'evasion') - determines which split file to load
+        
+        Returns:
+            Feature matrix (N, 18) loaded from Google Drive
+        
+        Raises:
+            FileNotFoundError: If feature file does not exist
+        """
+        npy_path = self.data_path / f'features/model_independent/X_{split}_{task}_independent.npy'
+        if not npy_path.exists():
+            raise FileNotFoundError(
+                f"Model-independent features not found: {npy_path}\n"
+                f"  Split: {split}, Task: {task}\n"
+                f"  Expected path: {npy_path}\n"
+                f"  Make sure you have run model-independent feature extraction for this split and task."
+            )
+        return np.load(npy_path)
     
     def save_predictions(self, predictions: np.ndarray, model_name: str, classifier: str, 
                         task: str, split: str, save_dir: Optional[str] = None,
