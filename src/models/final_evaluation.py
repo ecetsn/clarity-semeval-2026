@@ -257,6 +257,14 @@ def run_final_evaluation(
             X_train_full = np.vstack([X_train, X_dev])
             y_train_full_encoded = np.concatenate([y_train_encoded, y_dev_encoded])
             
+            # CRITICAL: Ensure y_train_full_encoded is a proper numpy array with integer dtype
+            # MLPClassifier requires numeric (integer) labels, not strings or objects
+            y_train_full_encoded = np.asarray(y_train_full_encoded, dtype=np.int64)
+            
+            # Verify: Check that labels are numeric (for debugging)
+            if not np.issubdtype(y_train_full_encoded.dtype, np.integer):
+                raise ValueError(f"Labels must be integer type for MLPClassifier, got {y_train_full_encoded.dtype}")
+            
             print(f"    Training: {X_train_full.shape[0]} samples (train+dev)")
             print(f"    Testing: {X_test.shape[0]} samples")
             
@@ -266,8 +274,21 @@ def run_final_evaluation(
             for clf_name, clf in classifiers.items():
                 print(f"\n    Training {clf_name}...")
                 
+                # Special handling for MLP: Disable early_stopping to avoid validation score issues
+                # The error occurs in MLPClassifier's internal validation score calculation
+                if clf_name == 'MLP' and hasattr(clf, 'named_steps') and 'clf' in clf.named_steps:
+                    # Temporarily disable early_stopping for MLP
+                    original_early_stopping = clf.named_steps['clf'].early_stopping
+                    clf.named_steps['clf'].early_stopping = False
+                
                 # Train on train+dev (with encoded labels)
-                clf.fit(X_train_full, y_train_full_encoded)
+                # Note: y_train_full_encoded is already verified as int64 numpy array
+                try:
+                    clf.fit(X_train_full, y_train_full_encoded)
+                finally:
+                    # Restore original early_stopping setting for MLP
+                    if clf_name == 'MLP' and hasattr(clf, 'named_steps') and 'clf' in clf.named_steps:
+                        clf.named_steps['clf'].early_stopping = original_early_stopping
                 
                 # Predict on test (returns encoded labels)
                 y_test_pred_encoded = clf.predict(X_test)
