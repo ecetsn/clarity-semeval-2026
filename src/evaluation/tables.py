@@ -525,13 +525,16 @@ def style_table_paper(
     precision: int = 4,
     clarity_col_name: str = 'clarity',
     hierarchical_col_name: str = 'hierarchical_evasion_to_clarity',
-    apply_column_mapping: bool = False
+    apply_column_mapping: bool = False,
+    best_direction: str = 'auto'  # NEW: 'auto', 'column', 'row'
 ) -> 'pd.Styler':
     """
     Paper-ready table styling: Minimal, professional, academic-friendly
     
     Styling rules:
-    1. Best values (column-wise and row-wise) → Bold + Dark Green
+    1. Best values → Bold + Dark Green
+       - Model-wise tables (Classifier × Tasks): Column-wise best (each task's best classifier)
+       - Classifier-wise tables (Model × Tasks): Row-wise best (each model's best task)
     2. Hierarchical > Clarity → Italic (no color)
     3. Others → Normal black
     
@@ -541,6 +544,8 @@ def style_table_paper(
         precision: Decimal precision for formatting
         clarity_col_name: Name of clarity column
         hierarchical_col_name: Name of hierarchical column
+        apply_column_mapping: If True, apply paper-ready column name mapping
+        best_direction: 'auto' (detect from index), 'column' (column-wise best), 'row' (row-wise best)
     
     Returns:
         Styled DataFrame (paper-ready)
@@ -600,54 +605,72 @@ def style_table_paper(
         elif 'hierarchical' in col_name.lower() or 'mapping' in col_name.lower():
             hierarchical_col = col
     
-    # Find best values: Column-wise (each task's best classifier)
-    # FIX: Only mark the SINGLE best value per column (not all equal values)
-    column_best = {}
-    column_best_indices = {}  # Track which row has the best value
-    for col_str in metric_cols_str:
-        # Find actual column object by string matching
-        for actual_col in df_clean.columns:
-            if str(actual_col) == col_str:
-                try:
-                    # Get all non-NaN values
-                    col_values = df_clean[actual_col].dropna()
-                    if len(col_values) > 0:
-                        max_val = col_values.max()
-                        # Only mark as best if there's a clear maximum (not all equal)
-                        unique_vals = col_values.unique()
-                        if len(unique_vals) > 1:
-                            # There are different values, find the row(s) with max
-                            max_indices = col_values[col_values == max_val].index.tolist()
-                            if len(max_indices) == 1:
-                                # Single best value
-                                column_best[actual_col] = max_val
-                                column_best_indices[actual_col] = max_indices[0]
-                        elif len(col_values) == 1:
-                            # Single value, mark as best
-                            column_best[actual_col] = max_val
-                            column_best_indices[actual_col] = col_values.index[0]
-                        # If all values are equal and > 1, don't mark any as best
-                except (KeyError, ValueError):
-                    pass
-                break
+    # AUTO-DETECT table type from index name (with fallback)
+    if best_direction == 'auto':
+        index_name = str(df_clean.index.name).lower() if df_clean.index.name else ''
+        # Check index name first
+        if 'classifier' in index_name:
+            best_direction = 'column'  # Model-wise: Classifier × Tasks → column-wise best
+        elif 'model' in index_name:
+            best_direction = 'row'     # Classifier-wise: Model × Tasks → row-wise best
+        else:
+            # Fallback: Check index values (first few) to guess
+            sample_indices = [str(idx).lower() for idx in df_clean.index[:3] if pd.notna(idx)]
+            classifier_keywords = ['classifier', 'logistic', 'random', 'xgboost', 'lightgbm', 'mlp', 'linear', 'svc']
+            if any(any(kw in idx for kw in classifier_keywords) for idx in sample_indices):
+                best_direction = 'column'  # Likely classifier names
+            else:
+                best_direction = 'column'  # Default to column-wise (safer)
     
-    # Find best values: Row-wise (each classifier's best task)
+    # Find best values based on direction
+    column_best = {}
+    column_best_indices = {}
     row_best = {}
-    for idx in df_clean.index:
-        row_values = []
+    row_best_col_names = {}  # Store column NAME instead of object (safer)
+    
+    if best_direction == 'column':
+        # Column-wise best: Find best value per column (task)
         for col_str in metric_cols_str:
-            # Find actual column object by string matching
             for actual_col in df_clean.columns:
                 if str(actual_col) == col_str:
                     try:
-                        val = df_clean.loc[idx, actual_col]
-                        if pd.notna(val):
-                            row_values.append(val)
+                        col_values = df_clean[actual_col].dropna()
+                        if len(col_values) > 0:
+                            max_val = col_values.max()
+                            unique_vals = col_values.unique()
+                            if len(unique_vals) > 1:
+                                max_indices = col_values[col_values == max_val].index.tolist()
+                                if len(max_indices) == 1:
+                                    column_best[actual_col] = max_val
+                                    column_best_indices[actual_col] = max_indices[0]
+                            elif len(col_values) == 1:
+                                column_best[actual_col] = max_val
+                                column_best_indices[actual_col] = col_values.index[0]
                     except (KeyError, ValueError):
                         pass
                     break
-        if row_values:
-            row_best[idx] = max(row_values)
+    
+    elif best_direction == 'row':
+        # Row-wise best: Find best value per row (model)
+        for idx in df_clean.index:
+            row_values = []
+            row_col_names = []  # Store column names
+            for col_str in metric_cols_str:
+                for actual_col in df_clean.columns:
+                    if str(actual_col) == col_str:
+                        try:
+                            val = df_clean.loc[idx, actual_col]
+                            if pd.notna(val):
+                                row_values.append(val)
+                                row_col_names.append(str(actual_col))  # Store name
+                        except (KeyError, ValueError):
+                            pass
+                        break
+            if row_values:
+                max_val = max(row_values)
+                max_idx = row_values.index(max_val)
+                row_best[idx] = max_val
+                row_best_col_names[idx] = row_col_names[max_idx]  # Store column name
     
     # Apply styling function
     def apply_cell_styles(row):
@@ -666,19 +689,23 @@ def style_table_paper(
             if is_metric_col and pd.notna(val):
                 style_parts = []
                 
-                # 1. Check if best column-wise (this task's best classifier)
-                # FIX: Only apply if this is the SINGLE best value (not all equal)
-                if col_obj in column_best and col_obj in column_best_indices:
-                    # Only mark as best if this specific row has the best value
-                    if row_idx == column_best_indices[col_obj]:
-                        if abs(val - column_best[col_obj]) < 1e-6:
-                            style_parts.append('font-weight: bold')
-                            style_parts.append('color: #006400')  # Dark green
+                # Apply best styling based on direction
+                if best_direction == 'column':
+                    # Column-wise: Mark best value per column (task's best classifier)
+                    if col_obj in column_best and col_obj in column_best_indices:
+                        if row_idx == column_best_indices[col_obj]:
+                            if abs(val - column_best[col_obj]) < 1e-6:
+                                style_parts.append('font-weight: bold')
+                                style_parts.append('color: #006400')  # Dark green
                 
-                # 2. Check if best row-wise (this classifier's best task)
-                if row_idx in row_best and abs(val - row_best[row_idx]) < 1e-6:
-                    style_parts.append('font-weight: bold')
-                    style_parts.append('color: #006400')  # Dark green
+                elif best_direction == 'row':
+                    # Row-wise: Mark best value per row (model's best task)
+                    if row_idx in row_best and row_idx in row_best_col_names:
+                        # Compare by column name (safer than object identity)
+                        if col_name == row_best_col_names[row_idx]:
+                            if abs(val - row_best[row_idx]) < 1e-6:
+                                style_parts.append('font-weight: bold')
+                                style_parts.append('color: #006400')  # Dark green
                 
                 # 3. Check if hierarchical > clarity (italic)
                 # FIX: Ensure clarity_col is found correctly (even without column mapping)
@@ -729,12 +756,12 @@ def style_table_paper(
     
     # Minimal table styling (clean, professional, NO background colors)
     # Combine with alignment styles
-    # FIX: Index column styling - ensure proper vertical alignment
+    # FIX: Index column styling - ensure proper vertical alignment and prevent text sliding
     base_styles = [
-        {'selector': 'th', 'props': [('color', '#212529'), ('font-weight', 'bold'), ('border', '1px solid #dee2e6'), ('text-align', 'center'), ('vertical-align', 'middle')]},
+        {'selector': 'th', 'props': [('color', '#212529'), ('font-weight', 'bold'), ('border', '1px solid #dee2e6'), ('text-align', 'center'), ('vertical-align', 'middle'), ('padding', '8px')]},
         {'selector': 'td', 'props': [('border', '1px solid #dee2e6'), ('padding', '8px'), ('vertical-align', 'middle')]},
-        {'selector': 'th:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left'), ('vertical-align', 'middle')]},
-        {'selector': 'td:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left'), ('vertical-align', 'middle')]},
+        {'selector': 'th:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left'), ('vertical-align', 'middle'), ('padding', '8px')]},
+        {'selector': 'td:first-child', 'props': [('font-weight', 'bold'), ('text-align', 'left'), ('vertical-align', 'middle'), ('padding', '8px')]},
     ]
     
     # Apply all styles together
