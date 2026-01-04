@@ -668,7 +668,7 @@ def style_table_paper(
     column_best = {}
     column_best_indices = {}
     row_best = {}
-    row_best_col_names = {}  # Store column NAME instead of object (safer)
+    row_best_col_objs = {}  # Store column OBJECT (more reliable than name)
     
     if best_direction == 'column':
         # Column-wise best: Find best value per column (task)
@@ -696,7 +696,7 @@ def style_table_paper(
         # Row-wise best: Find best value per row (model)
         for idx in df_clean.index:
             row_values = []
-            row_col_names = []  # Store column names
+            row_col_objs = []  # Store column objects (more reliable than names)
             for col_str in metric_cols_str:
                 for actual_col in df_clean.columns:
                     if str(actual_col) == col_str:
@@ -704,7 +704,7 @@ def style_table_paper(
                             val = df_clean.loc[idx, actual_col]
                             if pd.notna(val):
                                 row_values.append(val)
-                                row_col_names.append(str(actual_col))  # Store name
+                                row_col_objs.append(actual_col)  # Store column object
                         except (KeyError, ValueError):
                             pass
                         break
@@ -712,7 +712,7 @@ def style_table_paper(
                 max_val = max(row_values)
                 max_idx = row_values.index(max_val)
                 row_best[idx] = max_val
-                row_best_col_names[idx] = row_col_names[max_idx]  # Store column name
+                row_best_col_objs[idx] = row_col_objs[max_idx]  # Store column object
     
     # Apply styling function
     def apply_cell_styles(row):
@@ -742,9 +742,9 @@ def style_table_paper(
                 
                 elif best_direction == 'row':
                     # Row-wise: Mark best value per row (model's best task)
-                    if row_idx in row_best and row_idx in row_best_col_names:
-                        # Compare by column name (safer than object identity)
-                        if col_name == row_best_col_names[row_idx]:
+                    if row_idx in row_best and row_idx in row_best_col_objs:
+                        # Compare by column object (more reliable than name)
+                        if col_obj == row_best_col_objs[row_idx]:
                             if abs(val - row_best[row_idx]) < 1e-6:
                                 style_parts.append('font-weight: bold')
                                 style_parts.append('color: #006400')  # Dark green
