@@ -526,7 +526,8 @@ def style_table_paper(
     clarity_col_name: str = 'clarity',
     hierarchical_col_name: str = 'hierarchical_evasion_to_clarity',
     apply_column_mapping: bool = False,
-    best_direction: str = 'auto'  # NEW: 'auto', 'column', 'row'
+    best_direction: str = 'auto',  # 'auto', 'column', 'row'
+    table_name: Optional[str] = None  # NEW: Table name for auto-detection (e.g., 'model_wise_bert', 'classifier_wise_LightGBM')
 ) -> 'pd.Styler':
     """
     Paper-ready table styling: Minimal, professional, academic-friendly
@@ -545,13 +546,36 @@ def style_table_paper(
         clarity_col_name: Name of clarity column
         hierarchical_col_name: Name of hierarchical column
         apply_column_mapping: If True, apply paper-ready column name mapping
-        best_direction: 'auto' (detect from index), 'column' (column-wise best), 'row' (row-wise best)
+        best_direction: 'auto' (detect from table_name or index), 'column' (column-wise best), 'row' (row-wise best)
+        table_name: Optional table name for auto-detection (e.g., 'model_wise_bert' → column-wise, 'classifier_wise_LightGBM' → row-wise)
     
     Returns:
         Styled DataFrame (paper-ready)
     """
     # Clean up column names: Remove MultiIndex names if present (e.g., "task" header)
     df_clean = df.copy()
+    
+    # Remove completely empty rows and columns FIRST (before other processing)
+    df_clean = df_clean.dropna(how='all').dropna(axis=1, how='all')
+    
+    # Remove rows with invalid index values (NaN, empty strings, etc.)
+    if len(df_clean) > 0:
+        valid_indices = []
+        for idx in df_clean.index:
+            if pd.notna(idx) and str(idx).strip() != '':
+                valid_indices.append(idx)
+        if len(valid_indices) < len(df_clean.index):
+            df_clean = df_clean.loc[valid_indices]
+    
+    # Remove columns with invalid names
+    if len(df_clean.columns) > 0:
+        valid_cols = []
+        for col in df_clean.columns:
+            if pd.notna(col) and str(col).strip() != '':
+                valid_cols.append(col)
+        if len(valid_cols) < len(df_clean.columns):
+            df_clean = df_clean.loc[:, valid_cols]
+    
     if isinstance(df_clean.columns, pd.MultiIndex):
         # Flatten MultiIndex: keep only the actual column names, remove the level name
         df_clean.columns = df_clean.columns.get_level_values(-1)
@@ -605,22 +629,39 @@ def style_table_paper(
         elif 'hierarchical' in col_name.lower() or 'mapping' in col_name.lower():
             hierarchical_col = col
     
-    # AUTO-DETECT table type from index name (with fallback)
+    # AUTO-DETECT table type from table_name (most reliable) or index name (fallback)
     if best_direction == 'auto':
-        index_name = str(df_clean.index.name).lower() if df_clean.index.name else ''
-        # Check index name first
-        if 'classifier' in index_name:
-            best_direction = 'column'  # Model-wise: Classifier × Tasks → column-wise best
-        elif 'model' in index_name:
-            best_direction = 'row'     # Classifier-wise: Model × Tasks → row-wise best
-        else:
-            # Fallback: Check index values (first few) to guess
-            sample_indices = [str(idx).lower() for idx in df_clean.index[:3] if pd.notna(idx)]
-            classifier_keywords = ['classifier', 'logistic', 'random', 'xgboost', 'lightgbm', 'mlp', 'linear', 'svc']
-            if any(any(kw in idx for kw in classifier_keywords) for idx in sample_indices):
-                best_direction = 'column'  # Likely classifier names
+        # Priority 1: Check table_name (most reliable)
+        if table_name:
+            table_name_lower = str(table_name).lower()
+            if 'model_wise' in table_name_lower:
+                best_direction = 'column'  # Model-wise: Classifier × Tasks → column-wise best
+            elif 'classifier_wise' in table_name_lower:
+                best_direction = 'row'     # Classifier-wise: Model × Tasks → row-wise best
             else:
-                best_direction = 'column'  # Default to column-wise (safer)
+                # Fallback to index name detection
+                index_name = str(df_clean.index.name).lower() if df_clean.index.name else ''
+                if 'classifier' in index_name:
+                    best_direction = 'column'
+                elif 'model' in index_name:
+                    best_direction = 'row'
+                else:
+                    best_direction = 'column'  # Default
+        else:
+            # Priority 2: Check index name
+            index_name = str(df_clean.index.name).lower() if df_clean.index.name else ''
+            if 'classifier' in index_name:
+                best_direction = 'column'  # Model-wise: Classifier × Tasks → column-wise best
+            elif 'model' in index_name:
+                best_direction = 'row'     # Classifier-wise: Model × Tasks → row-wise best
+            else:
+                # Fallback: Check index values (first few) to guess
+                sample_indices = [str(idx).lower() for idx in df_clean.index[:3] if pd.notna(idx)]
+                classifier_keywords = ['classifier', 'logistic', 'random', 'xgboost', 'lightgbm', 'mlp', 'linear', 'svc']
+                if any(any(kw in idx for kw in classifier_keywords) for idx in sample_indices):
+                    best_direction = 'column'  # Likely classifier names
+                else:
+                    best_direction = 'column'  # Default to column-wise (safer)
     
     # Find best values based on direction
     column_best = {}

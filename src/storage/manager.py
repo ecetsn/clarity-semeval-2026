@@ -596,7 +596,8 @@ class StorageManager:
             # Çünkü notebook'ta display için mapping=False ile oluşturulmuş olabilir
             if use_paper_style:
                 from ..evaluation.tables import style_table_paper
-                styled_df = style_table_paper(df_to_save, apply_column_mapping=True)
+                # Pass table_name to style_table_paper for auto-detection of best_direction
+                styled_df = style_table_paper(df_to_save, apply_column_mapping=True, table_name=table_name)
             else:
                 styled_df = df  # Keep original styled version
         else:
@@ -616,7 +617,8 @@ class StorageManager:
             if use_paper_style and styled_df is None:
                 # Apply paper-ready styling WITH column mapping for saved files
                 from ..evaluation.tables import style_table_paper
-                styled_df = style_table_paper(df_to_save, apply_column_mapping=True)
+                # Pass table_name to style_table_paper for auto-detection of best_direction
+                styled_df = style_table_paper(df_to_save, apply_column_mapping=True, table_name=table_name)
             
             if styled_df is not None and hasattr(styled_df, 'render'):
                 # Paper-ready styled DataFrame
