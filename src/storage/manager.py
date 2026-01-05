@@ -755,12 +755,40 @@ class StorageManager:
         return np.load(npy_path)
     
     def load_fused_features(self, models: List[str], task: str, split: str) -> np.ndarray:
-        """Load fused features"""
-        model_str = '_'.join(sorted(models))
-        npy_path = self.data_path / f'features/fused/X_{split}_fused_{model_str}_{task}.npy'
-        if not npy_path.exists():
-            raise FileNotFoundError(f"Fused features not found: {npy_path}")
-        return np.load(npy_path)
+        """Load fused features
+        
+        Tries both original order and sorted order for maximum compatibility.
+        - First tries original order (matches save_fused_features which uses '_'.join(models))
+        - If not found, tries sorted order (for backward compatibility with old files)
+        
+        This ensures compatibility with:
+        - Notebook 4_5 (uses original order)
+        - Any old files saved with sorted order
+        - Future files saved with original order
+        """
+        # Try original order first (matches save_fused_features)
+        model_str_original = '_'.join(models)
+        npy_path_original = self.data_path / f'features/fused/X_{split}_fused_{model_str_original}_{task}.npy'
+        
+        if npy_path_original.exists():
+            return np.load(npy_path_original)
+        
+        # Fallback: Try sorted order (for backward compatibility)
+        model_str_sorted = '_'.join(sorted(models))
+        npy_path_sorted = self.data_path / f'features/fused/X_{split}_fused_{model_str_sorted}_{task}.npy'
+        
+        if npy_path_sorted.exists():
+            # Silent fallback - no warning needed, this is expected behavior
+            return np.load(npy_path_sorted)
+        
+        # Neither found - raise error with both paths for debugging
+        raise FileNotFoundError(
+            f"Fused features not found for {task} (split: {split}).\n"
+            f"  Tried original order: {npy_path_original}\n"
+            f"  Tried sorted order: {npy_path_sorted}\n"
+            f"  Models: {models}\n"
+            f"  Please ensure fused features have been created (e.g., run KOD HÜCRESİ 4 in notebook 4_5)."
+        )
     
     def load_results(self, experiment_id: str) -> Dict:
         """Load experiment results"""
