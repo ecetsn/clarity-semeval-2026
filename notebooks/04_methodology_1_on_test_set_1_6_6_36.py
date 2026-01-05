@@ -556,6 +556,22 @@ for model_key in MODELS:
                 f"   Test labels: {n_test_labels} samples\n"
                 f"   All must be equal!"
             )
+        
+        # CRITICAL: Verify test labels are not empty and contain valid labels
+        if len(y_test) == 0:
+            raise ValueError(f"❌ Test labels are empty for {task} task!")
+        
+        # Check for unique labels in test set
+        unique_test_labels = np.unique(y_test)
+        unique_train_labels = np.unique(y_train_full if 'y_train_full' in locals() else np.concatenate([y_train, y_dev]))
+        print(f"    Test labels unique values: {unique_test_labels}")
+        print(f"    Train labels unique values: {unique_train_labels}")
+        
+        # Check if test set contains labels not seen in training
+        unseen_labels = set(unique_test_labels) - set(unique_train_labels)
+        if unseen_labels:
+            print(f"    ⚠ WARNING: Test set contains labels not seen in training: {unseen_labels}")
+            print(f"    This may cause LabelEncoder to fail. Check data splits!")
 
         # Combine train+dev for final training
         X_train_full = np.vstack([X_train, X_dev])
@@ -578,20 +594,98 @@ for model_key in MODELS:
             # CRITICAL: Her classifier için ayrı LabelEncoder (Notebook 3 gibi)
             le = LabelEncoder()
             y_train_encoded = le.fit_transform(y_train_full)
-            y_test_encoded = le.transform(y_test)
+            
+            # CRITICAL FIX: Check if test labels contain unseen labels before transforming
+            unique_train_labels = set(le.classes_)
+            unique_test_labels = set(np.unique(y_test))
+            unseen_labels = unique_test_labels - unique_train_labels
+            
+            if unseen_labels:
+                raise ValueError(
+                    f"❌ LabelEncoder ERROR for {clf_name} on {task}:\n"
+                    f"   Test set contains labels not seen in training: {unseen_labels}\n"
+                    f"   Train labels: {unique_train_labels}\n"
+                    f"   Test labels: {unique_test_labels}\n"
+                    f"   This indicates data split issue or label mismatch!"
+                )
+            
+            # CRITICAL FIX: Verify y_test is not empty before encoding
+            if len(y_test) == 0:
+                raise ValueError(f"❌ Test labels are empty for {clf_name} on {task}!")
+            
+            try:
+                y_test_encoded = le.transform(y_test)
+            except ValueError as e:
+                raise ValueError(
+                    f"❌ LabelEncoder.transform() failed for {clf_name} on {task}:\n"
+                    f"   Error: {e}\n"
+                    f"   Train labels: {unique_train_labels}\n"
+                    f"   Test labels: {unique_test_labels}\n"
+                    f"   This usually means test set contains labels not in training set!"
+                ) from e
+            
+            # CRITICAL FIX: Verify encoded labels match expected range
+            if len(y_test_encoded) != len(y_test):
+                raise ValueError(
+                    f"❌ Label encoding mismatch: {len(y_test_encoded)} encoded vs {len(y_test)} original"
+                )
+            
+            # Debug: Print label encoding info
+            print(f"      Label encoding: {len(le.classes_)} classes")
+            print(f"      Test labels shape: {y_test.shape}, encoded shape: {y_test_encoded.shape}")
+            print(f"      Test labels unique (original): {np.unique(y_test)}")
+            print(f"      Test labels unique (encoded): {np.unique(y_test_encoded)}")
 
             # Train classifier (Pipeline içinde StandardScaler varsa otomatik kullanılır)
             clf.fit(X_train_full, y_train_encoded)
 
             # Predict on test
             y_test_pred_encoded = clf.predict(X_test)
+            
+            # CRITICAL FIX: Verify predictions shape matches test set
+            if len(y_test_pred_encoded) != len(y_test):
+                raise ValueError(
+                    f"❌ Prediction shape mismatch: {len(y_test_pred_encoded)} predictions vs {len(y_test)} test samples"
+                )
+            
+            # CRITICAL FIX: Verify predictions are in valid range
+            if len(y_test_pred_encoded) > 0:
+                min_pred = np.min(y_test_pred_encoded)
+                max_pred = np.max(y_test_pred_encoded)
+                min_valid = 0
+                max_valid = len(le.classes_) - 1
+                
+                if min_pred < min_valid or max_pred > max_valid:
+                    raise ValueError(
+                        f"❌ Invalid prediction range: [{min_pred}, {max_pred}], "
+                        f"expected [{min_valid}, {max_valid}]"
+                    )
+            
             y_test_pred = le.inverse_transform(y_test_pred_encoded)  # Decoded for storage
 
             # Get probabilities (if available)
             if hasattr(clf, 'predict_proba'):
                 y_test_proba = clf.predict_proba(X_test)
+                # CRITICAL FIX: Verify probabilities shape
+                if y_test_proba.shape[0] != len(y_test):
+                    raise ValueError(
+                        f"❌ Probability shape mismatch: {y_test_proba.shape[0]} vs {len(y_test)} test samples"
+                    )
             else:
                 y_test_proba = None
+
+            # CRITICAL FIX: Verify y_test_encoded and y_test_pred_encoded have same length
+            if len(y_test_encoded) != len(y_test_pred_encoded):
+                raise ValueError(
+                    f"❌ Label/prediction length mismatch: "
+                    f"{len(y_test_encoded)} labels vs {len(y_test_pred_encoded)} predictions"
+                )
+            
+            # CRITICAL FIX: Debug - print some sample predictions
+            print(f"      Sample predictions (first 5): {y_test_pred_encoded[:5]}")
+            print(f"      Sample true labels (first 5): {y_test_encoded[:5]}")
+            print(f"      Prediction distribution: {np.bincount(y_test_pred_encoded)}")
+            print(f"      True label distribution: {np.bincount(y_test_encoded)}")
 
             # CRITICAL FIX: Notebook 3 gibi - ENCODED labels ile compute_all_metrics çağır
             metrics = compute_all_metrics(
@@ -600,6 +694,14 @@ for model_key in MODELS:
                 label_list,           # String labels (Notebook 3 gibi)
                 task_name=f"TEST_{model_key}_{task}_{clf_name}"
             )
+            
+            # CRITICAL FIX: Debug - print metrics to verify they're not all zeros
+            print(f"      Metrics check - Accuracy: {metrics.get('accuracy', 0.0):.4f}")
+            print(f"      Metrics check - Macro F1: {metrics.get('macro_f1', 0.0):.4f}")
+            
+            if metrics.get('macro_f1', 0.0) == 0.0 and metrics.get('accuracy', 0.0) == 0.0:
+                print(f"      ⚠ WARNING: All metrics are 0! This indicates a serious problem.")
+                print(f"      Check: 1) Label encoding, 2) Feature-label alignment, 3) Classifier training")
 
             # CRITICAL FIX: Use DECODED labels for print_classification_report
             # sklearn's classification_report expects labels to match y_true/y_pred type
