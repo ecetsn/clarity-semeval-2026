@@ -1,0 +1,52 @@
+experiment:
+  name: weightedclasses_evasion_cls_last_non_pad
+  task: evasion
+logging:
+  base_dir: experiments/logs/representation
+  run_group: baseline_yaml
+outputs:
+  base_dir: experiments/representation/baseline
+data:
+  dataset_name: ailsntua/QEvasion
+  validation_size: 0.2
+  max_train_samples: null
+  max_val_samples: null
+  num_workers: 0
+training:
+  seed: 13
+  epochs: 5
+  batch_size: 4
+  lr: 0.0002
+  weight_decay: 0.01
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+  use_amp: true
+  log_every_steps: 50
+encoder:
+  type: distilbert
+  model_name: distilbert-base-uncased
+  pooling: cls
+  freeze: true
+decoder:
+  type: gpt2
+  model_name: gpt2
+  pooling: last_non_pad
+  freeze: true
+  lora:
+    enabled: false
+projection:
+  encoder:
+    type: mlp
+    params:
+      input_dim: 768
+      hidden_dim: 256
+      output_dim: 256
+  decoder:
+    type: mlp
+    params:
+      input_dim: 768
+      hidden_dim: 256
+      output_dim: 256
+loss:
+  type: cross_entropy
+  class_weighted: true

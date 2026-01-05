@@ -5,76 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="Added new encoders and decoders, updates to system">
-      <change afterPath="$PROJECT_DIR$/src/representation/classifiers/classifier_factory.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/classifiers/mlp_classifier.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/initial/roberta-llama-lora-sanity.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_distilbert_gpt2_frozen.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_roberta_opt_frozen.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_roberta_qwen_frozen.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_1hidden.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_2hidden.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_3hidden.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_linear.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_1hidden_relu.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_2hidden_relu.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_3hidden_relu.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_linear_relu.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_concatenate.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_decoder_only.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_encoder_only.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_cls_masked_mean.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_last_non_pad_last_non_pad.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_masked_mean_last_non_pad.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_masked_mean_masked_mean.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_cls_masked_mean.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_last_non_pad_last_non_pad.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_masked_mean_last_non_pad.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_masked_mean_masked_mean.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_128.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_256.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_512.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_0.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_10.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_20.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l2.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l3.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l4.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-qwen/clarity_roberta_qwen_lora.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-qwen/evasion_roberta_qwen_lora.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/decoders/qwen_decoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/evasion_test_evaluator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/final_script/final_script.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/.gitkeep" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/analyze_baseline_results.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/dataset_reveal.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/generate_yamls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_baseline.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_model_scale.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_classifier_ablations.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_dropout.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_fusion_ablations.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_projection_ablations.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_projection_depths.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/configs/baseline.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/baseline.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/configs/reproduced_baseline.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/reproduced_baseline.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/configs/roberta-opt-sanity.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/roberta-opt-sanity.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/data/qev_datamodule.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/data/qev_datamodule.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/decoders/base_decoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/decoders/base_decoder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/decoders/decoder_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/decoders/decoder_factory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/encoders/distilbert_encoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/encoders/distilbert_encoder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/evaluation/evaluator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/evaluation/evaluator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/evaluation/metrics.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/evaluation/metrics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/models/fusion_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/models/fusion_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/projections/mlp_projection.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/projections/mlp_projection.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/scripts/.gitkeep" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/classifiers/base_classifier.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/scripts/inspect_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/helper_scripts/inspect_dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/training/train_baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/training/train_baseline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/training/train_from_yaml.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/training/train_from_yaml.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/tryouts/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,11 +102,11 @@
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt\fusion_ablation" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments\logs\representation" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments\representation\roberta-opt_branch_ablations" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\evaluation" />
-      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test">
@@ -333,7 +266,7 @@
       <workItem from="1767398013708" duration="10162000" />
       <workItem from="1767560841949" duration="12493000" />
       <workItem from="1767599603161" duration="2075000" />
-      <workItem from="1767604910940" duration="18845000" />
+      <workItem from="1767604910940" duration="25045000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -375,7 +308,15 @@
       <option name="project" value="LOCAL" />
       <updated>1766925944338</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Added new encoders and decoders, updates to system">
+      <option name="closed" value="true" />
+      <created>1767628106168</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1767628106168</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -405,7 +346,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_sanity_check.coverage" NAME="decoder_sanity_check Coverage Results" MODIFIED="1766767905023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
-    <SUITE FILE_PATH="coverage/clarity_semeval_2026$test.coverage" NAME="test Coverage Results" MODIFIED="1767616671987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$test.coverage" NAME="test Coverage Results" MODIFIED="1767633728404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$train_baseline.coverage" NAME="train_baseline Coverage Results" MODIFIED="1766829410675" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/training" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_roberta_opt_classifier_ablations.coverage" NAME="run_yamls_roberta_opt_classifier_ablations Coverage Results" MODIFIED="1767380173699" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_OOP_sanity.coverage" NAME="decoder_OOP_sanity Coverage Results" MODIFIED="1766771721684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
