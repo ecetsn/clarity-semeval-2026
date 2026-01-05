@@ -33,4 +33,5 @@ notebooks/.ipynb_checkpoints/
 .DS_Store
 
 .idea/
-
+experiments/representation/roberta_qwen_lora.zip
+*.iml
