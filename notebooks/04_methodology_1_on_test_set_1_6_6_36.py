@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py
+"""05_final_evaluation.ipynb
 
 Final evaluation on test set for Methodology 1: Individual model baseline evaluation.
-Evaluates each of 6 models separately with each of 6 classifiers using all 25 features per model.
-"""
+
+Original file is located at
+    https://colab.research.google.com/github/EonTechie/semeval-context-tree-modular/blob/main/notebooks/05_final_evaluation.ipynb
 
 <div style="font-size: 10px;">
 
@@ -260,6 +261,7 @@ print("      you can set deterministic=False in set_all_seeds() call above.")
 # CONFIGURE MODELS, TASKS, AND CLASSIFIERS FOR FINAL EVALUATION
 # ============================================================================
 # Defines the models, tasks, and classifiers for final evaluation
+# NOTE: In practice, you should select best model/classifier based on Dev set
 # Evaluates all model/classifier combinations on test set
 
 # NOTE: run_final_evaluation() artık kullanılmıyor - ayrı cell'lerde yapılıyor (Cell 7-10)
@@ -365,7 +367,7 @@ try:
     )
     print("  ✓ Sentiment pipeline loaded")
 except Exception as e:
-    print(f"   Could not load sentiment pipeline: {e}")
+    print(f"  ⚠ Could not load sentiment pipeline: {e}")
     sentiment_pipeline = None
 
 metadata_keys = {
@@ -389,7 +391,7 @@ for task in TASKS:
         test_ds = storage.load_split('test', task=task)
         print(f"  Test set: {len(test_ds)} samples")
     except FileNotFoundError as e:
-        print(f"   Test split not found: {e}")
+        print(f"  ⚠ Test split not found: {e}")
         continue
 
     # CHECKPOINT: Try to load model-independent test features
@@ -445,7 +447,7 @@ for model_key in MODELS:
         print(f"\n  Task: {task}")
 
         if task not in test_model_independent_features:
-            print(f"     Skipping: Model-independent features not available")
+            print(f"    ⚠ Skipping: Model-independent features not available")
             continue
 
         # CHECKPOINT: Try to load test features from Drive
@@ -524,7 +526,7 @@ for model_key in MODELS:
             train_ds = storage.load_split('train', task=task)
             dev_ds = storage.load_split('dev', task=task)
         except FileNotFoundError as e:
-            print(f"   Error loading splits: {e}")
+            print(f"  ⚠ Error loading splits: {e}")
             continue
 
         # Load features
@@ -533,7 +535,7 @@ for model_key in MODELS:
             X_dev = storage.load_features(model_key, task, 'dev')
             X_test = storage.load_features(model_key, task, 'test')
         except FileNotFoundError as e:
-            print(f"   Error loading features: {e}")
+            print(f"  ⚠ Error loading features: {e}")
             continue
 
         # Extract labels
@@ -568,7 +570,7 @@ for model_key in MODELS:
         # Check if test set contains labels not seen in training
         unseen_labels = set(unique_test_labels) - set(unique_train_labels)
         if unseen_labels:
-            print(f"     WARNING: Test set contains labels not seen in training: {unseen_labels}")
+            print(f"    ⚠ WARNING: Test set contains labels not seen in training: {unseen_labels}")
             print(f"    This may cause LabelEncoder to fail. Check data splits!")
 
         # Combine train+dev for final training
@@ -578,9 +580,9 @@ for model_key in MODELS:
         print(f"    Training: {X_train_full.shape[0]} samples (train+dev)")
         print(f"    Testing: {X_test.shape[0]} samples (test dataset: {n_test_ds} samples)")
         if task == 'evasion':
-            print(f"     NOTE: Evasion test set has {n_test_ds} samples (Clarity test set has 308)")
+            print(f"    ⚠ NOTE: Evasion test set has {n_test_ds} samples (Clarity test set has 308)")
         elif task == 'clarity':
-            print(f"     NOTE: Clarity test set has {n_test_ds} samples (Evasion test set has 275)")
+            print(f"    ⚠ NOTE: Clarity test set has {n_test_ds} samples (Evasion test set has 275)")
 
         # CRITICAL FIX: Notebook 3 gibi - train_classifiers yerine manuel training
         # Her classifier için ayrı LabelEncoder ve encoded labels kullan
@@ -698,7 +700,7 @@ for model_key in MODELS:
             print(f"      Metrics check - Macro F1: {metrics.get('macro_f1', 0.0):.4f}")
             
             if metrics.get('macro_f1', 0.0) == 0.0 and metrics.get('accuracy', 0.0) == 0.0:
-                print(f"       WARNING: All metrics are 0! This indicates a serious problem.")
+                print(f"      ⚠ WARNING: All metrics are 0! This indicates a serious problem.")
                 print(f"      Check: 1) Label encoding, 2) Feature-label alignment, 3) Classifier training")
 
             # CRITICAL FIX: Use DECODED labels for print_classification_report
@@ -801,97 +803,130 @@ for model_key in MODELS:
 
             # Import mapping function
             from src.models.hierarchical import evasion_to_clarity, evaluate_hierarchical_approach
+            from src.evaluation.metrics import compute_all_metrics_any_annotator_match
 
-            # Evaluate each annotator's labels mapped to clarity
-            for annotator_name, y_annotator_evasion in [
-                ('annotator1_based_clarity', y_annotator1_evasion),
-                ('annotator2_based_clarity', y_annotator2_evasion),
-                ('annotator3_based_clarity', y_annotator3_evasion)
-            ]:
-                print(f"\n    Evaluating {annotator_name} (annotator evasion → clarity mapping)...")
+            # Map all three annotators' evasion labels to clarity
+            print(f"\n    Mapping all three annotators' labels to clarity...")
+            y_annotator1_clarity_mapped = np.array([
+                evasion_to_clarity(str(ev_label)) for ev_label in y_annotator1_evasion
+            ])
+            y_annotator2_clarity_mapped = np.array([
+                evasion_to_clarity(str(ev_label)) for ev_label in y_annotator2_evasion
+            ])
+            y_annotator3_clarity_mapped = np.array([
+                evasion_to_clarity(str(ev_label)) for ev_label in y_annotator3_evasion
+            ])
+            
+            # Encode all three annotator clarity labels
+            y_annotator1_clarity_encoded = le_clarity.transform(y_annotator1_clarity_mapped)
+            y_annotator2_clarity_encoded = le_clarity.transform(y_annotator2_clarity_mapped)
+            y_annotator3_clarity_encoded = le_clarity.transform(y_annotator3_clarity_mapped)
 
-                # Map annotator's evasion labels to clarity for comparison
-                y_annotator_clarity_mapped = np.array([
-                    evasion_to_clarity(str(ev_label)) for ev_label in y_annotator_evasion
-                ])
-                y_annotator_clarity_encoded = le_clarity.transform(y_annotator_clarity_mapped)
+            # NEW APPROACH: Evaluate against ANY of the three annotators (any match is correct)
+            annotator_name = 'annotator_any_match_clarity'
+            print(f"\n    Evaluating against ANY annotator match (annotator1 OR annotator2 OR annotator3)...")
+            print(f"    NOTE: A prediction is considered correct if it matches ANY of the three annotators")
 
-                annotator_results = {}
+            annotator_results = {}
 
-                # For each classifier, map its evasion predictions to clarity and evaluate
-                for clf_name, clf_result in task_results.items():
-                    # Get evasion predictions (string labels)
-                    y_evasion_pred = clf_result['predictions']
+            # For each classifier, map its evasion predictions to clarity and evaluate
+            for clf_name, clf_result in task_results.items():
+                # Get evasion predictions (string labels)
+                y_evasion_pred = clf_result['predictions']
 
-                    # Map evasion predictions to clarity using hierarchical mapping
-                    hierarchical_metrics = evaluate_hierarchical_approach(
-                        np.zeros(len(y_evasion_pred), dtype=int),  # Dummy evasion_true (not used)
-                        y_evasion_pred,  # Evasion predictions (string labels)
-                        y_annotator_clarity_encoded,  # Annotator's mapped clarity labels (encoded)
-                        LABEL_LISTS['evasion'],
-                        LABEL_LISTS['clarity']
-                    )
+                # Map evasion predictions to clarity using hierarchical mapping
+                # Use annotator1 as the "true" label for the mapping function (it's not used in final evaluation)
+                hierarchical_metrics = evaluate_hierarchical_approach(
+                    np.zeros(len(y_evasion_pred), dtype=int),  # Dummy evasion_true (not used)
+                    y_evasion_pred,  # Evasion predictions (string labels)
+                    y_annotator1_clarity_encoded,  # Dummy clarity_true (not used in final evaluation)
+                    LABEL_LISTS['evasion'],
+                    LABEL_LISTS['clarity']
+                )
+                
+                # Get clarity predictions (encoded)
+                y_clarity_pred_encoded = hierarchical_metrics['predictions']
 
-                    # Evaluate mapped predictions against annotator's mapped clarity labels
-                    annotator_metrics = compute_all_metrics(
-                        y_annotator_clarity_encoded,
-                        hierarchical_metrics['predictions'],
-                        LABEL_LISTS['clarity'],
-                        task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
-                    )
-
-                    # Decode predictions for print_classification_report (needs string labels)
-                    y_annotator_clarity_decoded = le_clarity.inverse_transform(y_annotator_clarity_encoded)
-                    y_clarity_pred_decoded = le_clarity.inverse_transform(hierarchical_metrics['predictions'])
-
-                    # Print classification report (use decoded string labels)
-                    print_classification_report(
-                        y_annotator_clarity_decoded,
-                        y_clarity_pred_decoded,
-                        LABEL_LISTS['clarity'],
-                        task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
-                    )
-
-                    # Create confusion matrix
-                    from src.evaluation.plots import plot_confusion_matrix
-                    plot_confusion_matrix(
-                        y_annotator_clarity_encoded,
-                        hierarchical_metrics['predictions'],
-                        LABEL_LISTS['clarity'],
-                        task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
-                        save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
-                    )
-
-                    annotator_results[clf_name] = {
-                        'predictions': hierarchical_metrics['predictions'],  # Clarity predictions
-                        'probabilities': None,  # No probabilities for mapping-based approach
-                        'metrics': annotator_metrics
-                    }
-
-                # Print comparison table for this annotator
-                print_results_table(
-                    {name: {'metrics': res['metrics']} for name, res in annotator_results.items()},
-                    task_name=f"TEST - {model_key} - {annotator_name}",
-                    sort_by="Macro F1"
+                # Evaluate using "any match" logic: prediction is correct if it matches ANY annotator
+                annotator_metrics = compute_all_metrics_any_annotator_match(
+                    y_clarity_pred_encoded,  # Predicted clarity labels (encoded)
+                    y_annotator1_clarity_encoded,  # Annotator 1 clarity labels (encoded)
+                    y_annotator2_clarity_encoded,  # Annotator 2 clarity labels (encoded)
+                    y_annotator3_clarity_encoded,  # Annotator 3 clarity labels (encoded)
+                    LABEL_LISTS['clarity'],
+                    task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
                 )
 
-                # Store results in all_results (will appear in summary tables)
-                if annotator_name not in all_results[model_key]:
-                    all_results[model_key][annotator_name] = {}
-                all_results[model_key][annotator_name] = annotator_results
+                # Print match statistics
+                match_stats = annotator_metrics.get('match_statistics', {})
+                print(f"      Match statistics for {clf_name}:")
+                print(f"        Total samples: {match_stats.get('total_samples', 0)}")
+                print(f"        Matches ANY annotator: {match_stats.get('matches_any', 0)} ({match_stats.get('matches_any', 0) / max(match_stats.get('total_samples', 1), 1) * 100:.2f}%)")
+                print(f"        Matches annotator1: {match_stats.get('matches_annotator1', 0)}")
+                print(f"        Matches annotator2: {match_stats.get('matches_annotator2', 0)}")
+                print(f"        Matches annotator3: {match_stats.get('matches_annotator3', 0)}")
+                print(f"        Matches multiple: {match_stats.get('matches_multiple', 0)}")
 
-                # Save results metadata
-                experiment_id = f"FINAL_TEST_{model_key}_{annotator_name}"
-                storage.save_results({
-                    'split': 'test',
-                    'model': model_key,
-                    'task': annotator_name,
-                    'n_test': len(y_annotator_clarity_encoded),
-                    'results': {
-                        name: {'metrics': res['metrics']}
-                        for name, res in annotator_results.items()
-                    }
-                }, experiment_id, save_dir='results/FinalResultsType1Results')
+                # Decode predictions for print_classification_report (needs string labels)
+                # For display, use annotator1 as the "true" labels (since we can't display "any match")
+                y_clarity_pred_decoded = le_clarity.inverse_transform(y_clarity_pred_encoded)
+                y_annotator1_clarity_decoded = le_clarity.inverse_transform(y_annotator1_clarity_encoded)
+
+                # Print classification report (using annotator1 as reference for display)
+                print(f"\n      Classification Report (using annotator1 as reference for display):")
+                print_classification_report(
+                    y_annotator1_clarity_decoded,
+                    y_clarity_pred_decoded,
+                    LABEL_LISTS['clarity'],
+                    task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
+                )
+                
+                # Print the key metric: accuracy with "any match" logic
+                print(f"      ⭐ KEY METRIC - Accuracy (any match): {annotator_metrics['accuracy']:.4f}")
+                print(f"      Macro F1: {annotator_metrics['macro_f1']:.4f}")
+                print(f"      Weighted F1: {annotator_metrics['weighted_f1']:.4f}")
+
+                # Create confusion matrix (using annotator1 as reference)
+                from src.evaluation.plots import plot_confusion_matrix
+                plot_confusion_matrix(
+                    y_annotator1_clarity_encoded,
+                    y_clarity_pred_encoded,
+                    LABEL_LISTS['clarity'],
+                    task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
+                    save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
+                )
+
+                annotator_results[clf_name] = {
+                    'predictions': y_clarity_pred_encoded,  # Clarity predictions (encoded)
+                    'probabilities': None,  # No probabilities for mapping-based approach
+                    'metrics': annotator_metrics
+                }
+
+            # Print comparison table
+            print_results_table(
+                {name: {'metrics': res['metrics']} for name, res in annotator_results.items()},
+                task_name=f"TEST - {model_key} - {annotator_name}",
+                sort_by="Macro F1"
+            )
+
+            # Store results in all_results (will appear in summary tables)
+            if annotator_name not in all_results[model_key]:
+                all_results[model_key][annotator_name] = {}
+            all_results[model_key][annotator_name] = annotator_results
+
+            # Save results metadata
+            experiment_id = f"FINAL_TEST_{model_key}_{annotator_name}"
+            storage.save_results({
+                'split': 'test',
+                'model': model_key,
+                'task': annotator_name,
+                'n_test': len(y_annotator1_clarity_encoded),
+                'evaluation_note': 'Prediction is correct if it matches ANY of annotator1, annotator2, or annotator3',
+                'results': {
+                    name: {'metrics': res['metrics']}
+                    for name, res in annotator_results.items()
+                }
+            }, experiment_id, save_dir='results/FinalResultsType1Results')
 
 # CRITICAL: Save all_results dictionary immediately after evaluation
 # This ensures results are saved even if table generation fails later
@@ -1100,7 +1135,7 @@ print("="*80)
 # CRITICAL: Try to load all_results if not in memory (notebook was restarted)
 # This allows table generation even if notebook was restarted
 if 'all_results' not in globals() or not all_results:
-    print("\n all_results not found in memory. Attempting to load from disk...")
+    print("\n⚠ all_results not found in memory. Attempting to load from disk...")
     try:
         import pickle
         # Try GitHub first (preferred)
@@ -1164,7 +1199,7 @@ if 'all_results' not in globals() or not all_results:
                                               f"  - Drive: {drive_pkl_path_step2}")
     except (FileNotFoundError, KeyError, Exception) as e:
         print(f"  ✗ Could not load all_results: {e}")
-        print("   Please run Cell 8 (STEP 2) and Cell 9 (STEP 3) first!")
+        print("  ⚠ Please run Cell 8 (STEP 2) and Cell 9 (STEP 3) first!")
         raise
 else:
     print("  ✓ all_results found in memory")
@@ -1247,7 +1282,7 @@ if summary_rows:
                 values='macro_f1'
             )
         except ValueError as e:
-            print(f"   Error creating pivot table: {e}")
+            print(f"  ⚠ Error creating pivot table: {e}")
             print(f"  This might indicate duplicate (classifier, task) combinations")
             print(f"  DataFrame shape: {df_model.shape}")
             duplicates = df_model[df_model.duplicated(subset=['classifier', 'task'], keep=False)]
@@ -1313,7 +1348,7 @@ if summary_rows:
                 values='macro_f1'
             )
         except ValueError as e:
-            print(f"   Error creating pivot table: {e}")
+            print(f"  ⚠ Error creating pivot table: {e}")
             print(f"  This might indicate duplicate (model, task) combinations")
             print(f"  DataFrame shape: {df_clf.shape}")
             duplicates = df_clf[df_clf.duplicated(subset=['model', 'task'], keep=False)]

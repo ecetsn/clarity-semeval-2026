@@ -58,5 +58,5 @@ def set_all_seeds(seed: int = 42, deterministic: bool = True):
     if deterministic:
         print("✓ PyTorch deterministic mode enabled (may be slower)")
     else:
-        print("⚠ PyTorch deterministic mode disabled (faster but less reproducible)")
+        print(" PyTorch deterministic mode disabled (faster but less reproducible)")
 

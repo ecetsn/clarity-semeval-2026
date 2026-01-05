@@ -24,7 +24,7 @@ def predict_from_qa_pairs(
     Predict labels from question-answer pairs using trained classifier.
     
     This function:
-    1. Extracts 19 Context Tree features from question-answer pairs
+    1. Extracts 25 Context Tree features from question-answer pairs
     2. Predicts using trained classifier (classifier already contains StandardScaler if needed)
     
     Args:

@@ -230,7 +230,7 @@ def create_greedy_fused_features(
             greedy_selected_features = load_greedy_selected_features(storage, task)
             print(f"  Loaded greedy-selected features for {len(greedy_selected_features)} models")
         except FileNotFoundError as e:
-            print(f"  ⚠ Could not load greedy features: {e}")
+            print(f"   Could not load greedy features: {e}")
             print(f"  Using all features instead...")
             greedy_selected_features = {}
     
@@ -246,12 +246,12 @@ def create_greedy_fused_features(
         try:
             X_full = storage.load_features(model, task, split)
         except FileNotFoundError:
-            print(f"  ⚠ Features not found for {model} × {task} × {split}, skipping...")
+            print(f"   Features not found for {model} × {task} × {split}, skipping...")
             continue
         
         # Get selected features for this model
         if model not in greedy_selected_features:
-            print(f"  ⚠ No greedy features for {model}, using all features")
+            print(f"   No greedy features for {model}, using all features")
             selected_features = all_feature_names
         else:
             selected_features = greedy_selected_features[model]
@@ -265,10 +265,10 @@ def create_greedy_fused_features(
                 selected_indices.append(idx)
                 selected_names.append(feat_name)
             else:
-                print(f"  ⚠ Feature '{feat_name}' not found in feature list, skipping...")
+                print(f"   Feature '{feat_name}' not found in feature list, skipping...")
         
         if len(selected_indices) == 0:
-            print(f"  ⚠ No valid features selected for {model}, skipping...")
+            print(f"   No valid features selected for {model}, skipping...")
             continue
         
         # Extract selected features
@@ -330,7 +330,7 @@ def create_topk_fused_features(
         task_topk = topk_data.get(task, {}).get('features', [])[:top_k_features]
         
     except (FileNotFoundError, KeyError) as e:
-        print(f"  ⚠ Could not load top-K features: {e}")
+        print(f"   Could not load top-K features: {e}")
         print(f"  Using all features instead...")
         task_topk = get_feature_names()[:top_k_features]  # Fallback: first K features
     
@@ -424,7 +424,7 @@ def ensemble_from_results(
     elif ensemble_method in ['mean', 'weighted_mean', 'max']:
         if len(probabilities_list) == 0:
             # Fallback to hard voting if no probabilities
-            print("  ⚠ No probabilities available, using hard voting instead")
+            print("   No probabilities available, using hard voting instead")
             ensemble_pred = ensemble_predictions_voting(predictions_list, 'hard_voting')
             ensemble_proba = None
         else:

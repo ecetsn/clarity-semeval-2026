@@ -91,7 +91,7 @@ def final_classification_type1(
                 print(f"  Training on: {X_train_full.shape[0]} samples (train+dev combined)")
                 
             except FileNotFoundError as e:
-                print(f"  ⚠ Error loading features: {e}")
+                print(f"   Error loading features: {e}")
                 continue
             
             # Load test dataset
@@ -99,7 +99,7 @@ def final_classification_type1(
                 test_ds = storage.load_split('test', task=task)
                 print(f"  Test set: {len(test_ds)} samples")
             except FileNotFoundError as e:
-                print(f"  ⚠ Error loading test set: {e}")
+                print(f"   Error loading test set: {e}")
                 continue
             
             # Train each classifier and predict on test
@@ -119,7 +119,7 @@ def final_classification_type1(
                     X_test = storage.load_features(model, task, 'test')
                     print(f"    Loaded test features: {X_test.shape}")
                 except FileNotFoundError:
-                    print(f"    ⚠ Test features not found. Need to extract first using inference function.")
+                    print(f"     Test features not found. Need to extract first using inference function.")
                     continue
                 
                 # Predict
@@ -224,7 +224,7 @@ def final_classification_type2(
             print(f"  Training on: {X_train_full.shape[0]} samples (train+dev fused)")
             
         except FileNotFoundError as e:
-            print(f"  ⚠ Error loading fused features: {e}")
+            print(f"   Error loading fused features: {e}")
             print(f"    Expected paths:")
             print(f"      {fused_train_path}")
             print(f"      {fused_dev_path}")
@@ -235,7 +235,7 @@ def final_classification_type2(
             test_ds = storage.load_split('test', task=task)
             print(f"  Test set: {len(test_ds)} samples")
         except FileNotFoundError as e:
-            print(f"  ⚠ Error loading test set: {e}")
+            print(f"   Error loading test set: {e}")
             continue
         
         # Load or extract fused test features
@@ -244,7 +244,7 @@ def final_classification_type2(
             X_test_fused = np.load(fused_test_path)
             print(f"  Loaded fused test features: {X_test_fused.shape}")
         except FileNotFoundError:
-            print(f"  ⚠ Fused test features not found. Need to extract first.")
+            print(f"   Fused test features not found. Need to extract first.")
             continue
         
         # Train each classifier and predict on test

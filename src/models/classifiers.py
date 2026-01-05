@@ -29,7 +29,7 @@ except ImportError:
 
 def get_classifier_dict(random_state: int = 42) -> Dict[str, Any]:
     """
-    Get dictionary of classifiers (same as siparismaili01)
+    Get dictionary of classifier instances with default configurations.
     
     Returns:
         Dictionary mapping classifier name -> classifier instance
@@ -133,7 +133,6 @@ def train_classifiers(
         classifiers = get_classifier_dict(random_state=random_state)
     
     # Encode labels to numeric (required for MLPClassifier and some sklearn functions)
-    # This matches the approach in siparismaili01 notebook
     label_encoder = LabelEncoder()
     y_train_encoded = label_encoder.fit_transform(y_train)
     y_dev_encoded = label_encoder.transform(y_dev)

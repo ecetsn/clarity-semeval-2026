@@ -641,11 +641,11 @@ class StorageManager:
         with open(splits_path, 'rb') as f:
             splits_data = pickle.load(f)
         
-        # NEW: If dataset data is saved in pickle (as lists of dicts), convert to SimpleDataset
+        # If dataset data is saved in pickle (as lists of dicts), convert to SimpleDataset
         # This ensures no HuggingFace dependency is needed
         if split_name == 'train' and 'train_ds' in splits_data:
             data = splits_data['train_ds']
-            # Check if it's already a list of dicts (new format)
+            # Check if it's already a list of dicts
             if isinstance(data, list):
                 return SimpleDataset(data)
             else:
@@ -787,7 +787,7 @@ class StorageManager:
             f"  Tried original order: {npy_path_original}\n"
             f"  Tried sorted order: {npy_path_sorted}\n"
             f"  Models: {models}\n"
-            f"  Please ensure fused features have been created (e.g., run KOD HÜCRESİ 4 in notebook 4_5)."
+            f"  Please ensure fused features have been created (e.g., run STEP 4 in early fusion notebook)."
         )
     
     def load_results(self, experiment_id: str) -> Dict:
@@ -829,8 +829,8 @@ class StorageManager:
         # Extract DataFrame if it's a Styler
         if hasattr(df, 'data'):
             df_to_save = df.data
-            # Eğer use_paper_style=True ise, yeniden style_table_paper çağır (mapping ile)
-            # Çünkü notebook'ta display için mapping=False ile oluşturulmuş olabilir
+            # If use_paper_style=True, reapply style_table_paper with mapping
+            # Notebook display may have been created with mapping=False
             if use_paper_style:
                 from ..evaluation.tables import style_table_paper
                 # Pass table_name to style_table_paper for auto-detection of best_direction

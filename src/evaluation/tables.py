@@ -1,5 +1,5 @@
 """
-Results table creation and printing (like siparismaili01)
+Results table creation and printing utilities
 """
 import pandas as pd
 from typing import Dict, List, Any, Optional
@@ -171,7 +171,7 @@ def create_model_wise_summary(
     tasks: List[str]
 ) -> pd.DataFrame:
     """
-    Create model-wise summary table (like siparismaili01)
+    Create model-wise summary table comparing classifiers across models
     
     Args:
         all_results: Dict[model_name][task_name][classifier_name] -> results
@@ -519,7 +519,7 @@ def style_table_paper(
     hierarchical_col_name: str = 'evasion_based_clarity',
     apply_column_mapping: bool = False,
     best_direction: str = 'auto',  # 'auto', 'column', 'row'
-    table_name: Optional[str] = None  # NEW: Table name for auto-detection (e.g., 'model_wise_bert', 'classifier_wise_LightGBM')
+    table_name: Optional[str] = None  # Table name for auto-detection (e.g., 'model_wise_bert', 'classifier_wise_LightGBM')
 ) -> 'pd.Styler':
     """
     Paper-ready table styling: Minimal, professional, academic-friendly
