@@ -1,0 +1,191 @@
+================================================================================
+SELECTED FEATURES LOKASYON TABLOSU
+================================================================================
+
+Her model×task×classifier kombinasyonu için seçilmiş feature'ların nerede saklandığı:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. ABLATION STUDY SONUÇLARI (Greedy Selection)                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Dosya: results/ablation/selected_features_all.json                         │
+│ Format: {model_task_classifier: {model, task, classifier,                   │
+│          selected_features, n_features, greedy_f1}}                          │
+│                                                                             │
+│ Key Format: {model}_{task}_{classifier}                                     │
+│ Örnek: "bert_clarity_LogisticRegression"                                   │
+│                                                                             │
+│ Oluşturulduğu Yer:                                                         │
+│   - notebooks/03_5_ESKİCELL7_çalışırkenyarıdakalmışolan_ablation.py       │
+│   - notebooks/ablation.py (Cell 6 - Greedy Forward Selection)              │
+│                                                                             │
+│ İçerik:                                                                     │
+│   - Her model×task×classifier için greedy ile seçilmiş feature listesi    │
+│   - Global top-10 + classifier-specific greedy 10 = max 20 features        │
+│   - Her kombinasyon için greedy_f1 score                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 2. TOP-K FEATURES FOR EARLY FUSION                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Dosya: results/ablation/selected_features_for_early_fusion.json            │
+│ Format: {task: {top_k, features, ranking}}                                 │
+│                                                                             │
+│ Kullanım: Tüm modeller için aynı top-K feature'lar (task bazında)        │
+│                                                                             │
+│ Oluşturulduğu Yer:                                                         │
+│   - notebooks/03_5_ESKİCELL7_çalışırkenyarıdakalmışolan_ablation.py       │
+│   - notebooks/ablation.py (Cell 5 - Top-K Feature Selection)                │
+│                                                                             │
+│ İçerik:                                                                     │
+│   - Her task için top-10 feature (weighted_score'a göre)                   │
+│   - Ranking bilgisi (weighted_score, mean_f1, best_f1, std_f1)           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 3. CHECKPOINT DOSYALARI (60-Feature System)                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Dizin: results/FinalResultsType2/classifier_specific/checkpoint/            │
+│                                                                             │
+│ Dosya Formatları:                                                           │
+│   - selected_features_{classifier}_{task}.json                              │
+│   - trajectory_{classifier}_{task}.csv                                     │
+│   - greedy_checkpoint_{classifier}_{task}.pkl                               │
+│   - metrics_{classifier}_{task}.json                                        │
+│   - {classifier}_{task}_predictions.npy                                      │
+│   - {classifier}_{task}_probabilities.npy                                   │
+│                                                                             │
+│ Oluşturulduğu Yer:                                                         │
+│   - notebooks/ablation.py (Cell 7 - Classifier-Specific Feature Selection)  │
+│                                                                             │
+│ İçerik:                                                                     │
+│   - 60-feature early fusion sisteminden seçilmiş feature'lar               │
+│   - Global top-20 + classifier-specific greedy 20 = 40 features            │
+│   - Greedy selection trajectory (n_features, macro_f1)                      │
+│   - Test set predictions ve probabilities                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+MODEL × TASK × CLASSIFIER KOMBINASYONLARI
+================================================================================
+
+Modeller (6):
+  - bert
+  - bert_political
+  - bert_ambiguity
+  - roberta
+  - deberta
+  - xlnet
+
+Task'lar (2):
+  - clarity (3 classes)
+  - evasion (9 classes)
+
+Classifier'lar (6):
+  - LogisticRegression
+  - LinearSVC
+  - RandomForest
+  - MLP
+  - XGBoost
+  - LightGBM
+
+Toplam Kombinasyon: 6 × 2 × 6 = 72 kombinasyon
+
+================================================================================
+DOSYA LOKASYONLARI (Google Drive - Colab)
+================================================================================
+
+Ablation Study:
+  /content/drive/MyDrive/semeval_data/results/ablation/
+    ├── selected_features_all.json
+    ├── selected_features_for_early_fusion.json
+    ├── feature_ranking_clarity.csv
+    ├── feature_ranking_evasion.csv
+    └── greedy_trajectory_{model}_{task}_{classifier}.csv
+
+Checkpoint Files (60-Feature System):
+  /content/drive/MyDrive/semeval_data/results/FinalResultsType2/classifier_specific/checkpoint/
+    ├── selected_features_{classifier}_{task}.json
+    ├── trajectory_{classifier}_{task}.csv
+    ├── greedy_checkpoint_{classifier}_{task}.pkl
+    ├── metrics_{classifier}_{task}.json
+    └── ...
+
+Predictions & Probabilities:
+  /content/drive/MyDrive/semeval_data/results/FinalResultsType2/classifier_specific/
+    ├── predictions/
+    │   └── {classifier}_{task}_predictions.npy
+    └── probabilities/
+        └── {classifier}_{task}_probabilities.npy
+
+================================================================================
+FEATURE SAYILARI
+================================================================================
+
+1. Individual Model Features (25 features):
+   - 7 model-dependent features
+   - 18 model-independent features
+   - Greedy selection ile: 20 features (global top-10 + greedy 10)
+
+2. Early Fusion Features (60 features):
+   - 18 model-independent features (1×)
+   - 42 model-dependent features (6 models × 7)
+   - Greedy selection ile: 40 features (global top-20 + greedy 20)
+
+================================================================================
+KULLANIM ÖRNEKLERİ
+================================================================================
+
+1. Ablation Study Sonuçlarını Yükleme:
+   ```python
+   import json
+   from pathlib import Path
+   
+   ablation_path = Path('results/ablation/selected_features_all.json')
+   with open(ablation_path, 'r') as f:
+       selected_features_all = json.load(f)
+   
+   # Her kombinasyon için
+   for key, value in selected_features_all.items():
+       print(f"{key}: {value['n_features']} features")
+   ```
+
+2. Checkpoint Dosyalarını Yükleme:
+   ```python
+   checkpoint_dir = Path('results/FinalResultsType2/classifier_specific/checkpoint')
+   for file_path in checkpoint_dir.glob('selected_features_*.json'):
+       with open(file_path, 'r') as f:
+           features = json.load(f)
+       print(f"{file_path.name}: {len(features)} features")
+   ```
+
+3. StorageManager ile Yükleme:
+   ```python
+   from src.models.ensemble import load_greedy_selected_features
+   
+   greedy_features = load_greedy_selected_features(storage, task='clarity')
+   # Returns: {'bert': [...], 'roberta': [...], ...}
+   ```
+
+================================================================================
+NOTLAR
+================================================================================
+
+1. Dosyalar Google Drive'da saklanıyorsa, lokal workspace'te görünmeyebilir.
+   Colab'da çalıştırırken storage.data_path kullanın.
+
+2. Checkpoint mekanizması: Eğer bir kombinasyon için checkpoint varsa,
+   greedy selection tekrar çalıştırılmaz.
+
+3. Feature selection stratejileri:
+   - Ablation (25 features): Global top-10 + greedy 10 = 20 features
+   - Early Fusion (60 features): Global top-20 + greedy 20 = 40 features
+
+4. Tablo oluşturma scripti:
+   python check_selected_features.py
+   
+   Çıktılar:
+   - selected_features_table.csv
+   - selected_features_detailed.csv
+
+================================================================================
+
