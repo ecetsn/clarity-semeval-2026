@@ -601,11 +601,13 @@ for model_key in MODELS:
                 task_name=f"TEST_{model_key}_{task}_{clf_name}"
             )
 
-            # CRITICAL FIX: Notebook 3 gibi - ENCODED labels ile print_classification_report çağır
+            # CRITICAL FIX: Use DECODED labels for print_classification_report
+            # sklearn's classification_report expects labels to match y_true/y_pred type
+            # Since we have string labels, use decoded string predictions
             print_classification_report(
-                y_test_encoded,        # ENCODED (Notebook 3 gibi)
-                y_test_pred_encoded,  # ENCODED (Notebook 3 gibi)
-                label_list,           # String labels (Notebook 3 gibi)
+                y_test,                # DECODED string labels (matches label_list type)
+                y_test_pred,          # DECODED string predictions (matches label_list type)
+                label_list,           # String labels
                 task_name=f"TEST - {model_key} - {task} - {clf_name}"
             )
 
@@ -738,10 +740,14 @@ for model_key in MODELS:
                         task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
                     )
 
-                    # Print classification report
+                    # Decode predictions for print_classification_report (needs string labels)
+                    y_annotator_clarity_decoded = le_clarity.inverse_transform(y_annotator_clarity_encoded)
+                    y_clarity_pred_decoded = le_clarity.inverse_transform(hierarchical_metrics['predictions'])
+
+                    # Print classification report (use decoded string labels)
                     print_classification_report(
-                        y_annotator_clarity_encoded,
-                        hierarchical_metrics['predictions'],
+                        y_annotator_clarity_decoded,
+                        y_clarity_pred_decoded,
                         LABEL_LISTS['clarity'],
                         task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
                     )
@@ -913,9 +919,12 @@ for model_key in MODELS:
     print(f"    Macro F1: {hierarchical_metrics['macro_f1']:.4f}")
     print(f"    Weighted F1: {hierarchical_metrics['weighted_f1']:.4f}")
 
+    # Decode predictions for print_classification_report (needs string labels)
+    y_clarity_pred_decoded = le_clarity.inverse_transform(hierarchical_metrics['predictions'])
+
     print_classification_report(
-        y_clarity_true_encoded,
-        hierarchical_metrics['predictions'],
+        y_clarity_true_test,  # Use original string labels (not encoded)
+        y_clarity_pred_decoded,  # Decoded string predictions
         LABEL_LISTS['clarity'],
         task_name=f"TEST - {model_key} - Hierarchical Evasion→Clarity"
     )
