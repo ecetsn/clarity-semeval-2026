@@ -31,3 +31,6 @@ notebooks/.ipynb_checkpoints/
 
 # OS
 .DS_Store
+
+.idea/
+*.iml
