@@ -56,9 +56,7 @@ def compute_classification_metrics(
         zero_division=0,
     )
 
-    # -----------------------
     # Per-class metrics
-    # -----------------------
     per_class: Dict[Label, Dict[str, float]] = {}
 
     for label in label_list:
@@ -73,9 +71,8 @@ def compute_classification_metrics(
 
     metrics["per_class"] = per_class
 
-    # -----------------------
+
     # Aggregate details
-    # -----------------------
     metrics["macro_avg_detail"] = {
         "precision": float(report["macro avg"]["precision"]),
         "recall": float(report["macro avg"]["recall"]),

@@ -1,0 +1,77 @@
+experiment:
+  name: clarity_roberta_opt_2hidden
+  task: clarity
+
+logging:
+  base_dir: experiments/logs/representation
+  run_group: roberta-opt_classification_ablations
+
+outputs:
+  base_dir: experiments/representation/roberta-opt_classification_ablations
+
+data:
+  dataset_name: ailsntua/QEvasion
+  validation_size: 0.2
+  max_train_samples: null
+  max_val_samples: null
+  max_test_samples: null
+  num_workers: 0
+
+training:
+  seed: 13
+  epochs: 5
+  batch_size: 4
+  lr: 0.0002
+  weight_decay: 0.01
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+  use_amp: true
+  log_every_steps: 50
+
+encoder:
+  type: roberta
+  model_name: roberta-base
+  pooling: masked_mean
+  freeze: true
+
+decoder:
+  type: opt
+  model_name: facebook/opt-1.3b
+  pooling: last_non_pad
+  freeze: true
+  lora:
+    enabled: false
+
+projection:
+  encoder:
+    type: mlp
+    params:
+      input_dim: 768
+      hidden_dim: 256
+      output_dim: 256
+      n_layers: 3
+      dropout: 0.1
+  decoder:
+    type: mlp
+    params:
+      input_dim: 2048
+      hidden_dim: 256
+      output_dim: 256
+      n_layers: 3
+      dropout: 0.1
+
+fusion:
+  mode: concat
+
+
+classifier:
+  type: mlp
+  params:
+    hidden_dims: [256, 256]
+    activation: gelu
+    dropout: 0.1
+
+
+loss:
+  type: cross_entropy
+  class_weighted: true

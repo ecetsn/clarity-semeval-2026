@@ -1,4 +1,4 @@
-# src/representation/tryouts/decoder_sanity_check.py
+# src/representation/tryouts/decoder_OOP_sanity.py
 
 from representation.decoders.gpt2_decoder import GPT2Decoder
 from representation.data.qev_datamodule import QEvasionDataModule

@@ -1,0 +1,88 @@
+experiment:
+  name: sanity_roberta_qwen_lora
+  task: clarity
+
+logging:
+  base_dir: experiments/logs/representation
+  run_group: sanity_checks
+
+outputs:
+  base_dir: experiments/representation/sanity
+
+data:
+  dataset_name: ailsntua/QEvasion
+  validation_size: 0.2
+  num_workers: 0
+
+training:
+  seed: 13
+  epochs: 2
+  batch_size: 2                # Qwen is heavy
+  lr: 0.0002
+  weight_decay: 0.01
+  grad_accum_steps: 8          # effective batch = 16
+  max_grad_norm: 1.0
+  use_amp: true
+  log_every_steps: 50
+
+# -------------------------
+# ENCODER: RoBERTa
+# -------------------------
+encoder:
+  type: roberta
+  model_name: roberta-base
+  pooling: masked_mean
+  freeze: true
+
+# -------------------------
+# DECODER: Qwen 2.5 + LoRA
+# -------------------------
+decoder:
+  type: llama                  # reuse LlamaDecoder
+  model_name: Qwen/Qwen2.5-7B-Instruct
+  pooling: masked_mean
+  freeze: true
+
+  quantization:
+    load_in_4bit: false
+    load_in_8bit: false
+    torch_dtype: bfloat16
+
+  lora:
+    enabled: true
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules:
+      - q_proj
+      - k_proj
+      - v_proj
+      - o_proj
+      - gate_proj
+      - up_proj
+      - down_proj
+
+# -------------------------
+# PROJECTIONS
+# -------------------------
+projection:
+  encoder:
+    type: mlp
+    params:
+      input_dim: 768
+      hidden_dim: 256
+      output_dim: 256
+
+  decoder:
+    type: mlp
+    params:
+      input_dim: 3584           # Qwen2.5-7B hidden size
+      hidden_dim: 256
+      output_dim: 256
+
+# -------------------------
+# LOSS
+# -------------------------
+loss:
+  type: cross_entropy
+  class_weighted: false

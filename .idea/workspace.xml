@@ -4,20 +4,77 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="YAML system finalized, baseline experiments">
-      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt-sanity.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/decoders/llama_decoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/decoders/opt_decoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/encoders/deberta_encoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/encoders/roberta_encoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/representation/tryouts/test.py" afterDir="false" />
+    <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="Added new encoders and decoders, updates to system">
+      <change afterPath="$PROJECT_DIR$/src/representation/classifiers/classifier_factory.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/classifiers/mlp_classifier.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/initial/roberta-llama-lora-sanity.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_distilbert_gpt2_frozen.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_roberta_opt_frozen.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/model-scale/clarity_roberta_qwen_frozen.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_1hidden.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_2hidden.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_3hidden.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation/clarity_roberta_opt_linear.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_1hidden_relu.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_2hidden_relu.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_3hidden_relu.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/classifier_ablation_relu/clarity_roberta_opt_linear_relu.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_concatenate.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_decoder_only.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/fusion_ablation/clarity_roberta_opt_encoder_only.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_cls_masked_mean.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_last_non_pad_last_non_pad.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_masked_mean_last_non_pad.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/clarity_roberta_opt_masked_mean_masked_mean.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_cls_masked_mean.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_last_non_pad_last_non_pad.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_masked_mean_last_non_pad.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/pooling_ablation/evasion_roberta_opt_masked_mean_masked_mean.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_128.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_256.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_512.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_0.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_10.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_dropout_20.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l2.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l3.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-opt/projection_ablation/clarity_roberta_opt_l4.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-qwen/clarity_roberta_qwen_lora.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/configs/roberta-qwen/evasion_roberta_qwen_lora.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/decoders/qwen_decoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/evaluation/evasion_test_evaluator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/final_script/final_script.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/.gitkeep" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/analyze_baseline_results.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/dataset_reveal.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/generate_yamls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_baseline.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_model_scale.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_classifier_ablations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_dropout.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_fusion_ablations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_projection_ablations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/helper_scripts/run_yamls_roberta_opt_projection_depths.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/representation/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/configs/baseline.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/baseline.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/configs/reproduced_baseline.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/reproduced_baseline.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/configs/roberta-opt-sanity.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/configs/initial/roberta-opt-sanity.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/data/qev_datamodule.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/data/qev_datamodule.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/representation/decoders/base_decoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/decoders/base_decoder.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/representation/decoders/decoder_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/decoders/decoder_factory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/decoders/gpt2_decoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/decoders/gpt2_decoder.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/representation/encoders/distilbert_encoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/encoders/distilbert_encoder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/encoders/encoder_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/encoders/encoder_factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/evaluation/evaluator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/evaluation/evaluator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/evaluation/metrics.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/evaluation/metrics.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/models/fusion_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/models/fusion_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/projections/mlp_projection.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/projections/mlp_projection.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/scripts/.gitkeep" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/classifiers/base_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/scripts/inspect_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/helper_scripts/inspect_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/training/train_baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/training/train_baseline.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/representation/training/train_from_yaml.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/training/train_from_yaml.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/representation/tryouts/test.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,12 +124,20 @@
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Python.analyze_baseline.executor&quot;: &quot;Run&quot;,
+    &quot;Python.dataset_reveal.executor&quot;: &quot;Run&quot;,
     &quot;Python.decoder_OOP_sanity.executor&quot;: &quot;Run&quot;,
     &quot;Python.decoder_sanity_check.executor&quot;: &quot;Run&quot;,
     &quot;Python.encoder_OOP_sanity.executor&quot;: &quot;Run&quot;,
     &quot;Python.encoder_sanity_check.executor&quot;: &quot;Run&quot;,
+    &quot;Python.final_script.executor&quot;: &quot;Run&quot;,
+    &quot;Python.final_script_updated.executor&quot;: &quot;Run&quot;,
     &quot;Python.fusion_sanity_check.executor&quot;: &quot;Run&quot;,
     &quot;Python.inspect_dataset.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_yamls_model_scale.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_yamls_roberta_opt_classifier_ablations.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_yamls_roberta_opt_dropout.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_yamls_roberta_opt_fusion_ablations.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_yamls_roberta_opt_projection_depths.executor&quot;: &quot;Run&quot;,
     &quot;Python.test.executor&quot;: &quot;Run&quot;,
     &quot;Python.train_baseline.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
@@ -84,6 +149,7 @@
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;ensemble-ihsan&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/İhsan/Desktop/Development/clarity-semeval-2026/src/representation/configs/roberta-qwen&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -95,14 +161,23 @@
   }
 }</component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-qwen" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt\classifier_ablation_relu" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt\classifier_ablation" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt\projection_ablation" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt\fusion_ablation" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\configs\roberta-opt" />
+      <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments\representation\roberta-opt_branch_ablations" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\experiments" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation\evaluation" />
       <recent name="C:\Users\İhsan\Desktop\Development\clarity-semeval-2026\src\representation" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test">
-    <configuration name="analyze_baseline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="dataset_reveal" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="clarity-semeval-2026" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -111,13 +186,13 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/training" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/helper_scripts" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/training/analyze_baseline.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/helper_scripts/dataset_reveal.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -126,7 +201,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="decoder_OOP_sanity" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="final_script" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="clarity-semeval-2026" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -135,13 +210,13 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/final_script" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/decoder_OOP_sanity.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/final_script/final_script.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -150,7 +225,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="encoder_OOP_sanity" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="final_script_updated" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="clarity-semeval-2026" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -159,13 +234,37 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/final_script" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/encoder_OOP_sanity.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/final_script/final_script_updated.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="run_yamls_model_scale" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="clarity-semeval-2026" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/scripts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/scripts/run_yamls_model_scale.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -183,37 +282,13 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/tryouts" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/tryouts/test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="train_baseline" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="clarity-semeval-2026" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/representation/training" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/training/train_baseline.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/representation/test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -225,10 +300,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.test" />
-        <item itemvalue="Python.train_baseline" />
-        <item itemvalue="Python.analyze_baseline" />
-        <item itemvalue="Python.decoder_OOP_sanity" />
-        <item itemvalue="Python.encoder_OOP_sanity" />
+        <item itemvalue="Python.final_script_updated" />
+        <item itemvalue="Python.final_script" />
+        <item itemvalue="Python.dataset_reveal" />
+        <item itemvalue="Python.run_yamls_model_scale" />
       </list>
     </recent_temporary>
   </component>
@@ -250,7 +325,15 @@
       <workItem from="1766754464958" duration="1726000" />
       <workItem from="1766756215731" duration="280000" />
       <workItem from="1766756634468" duration="380000" />
-      <workItem from="1766819281480" duration="25725000" />
+      <workItem from="1766819281480" duration="31387000" />
+      <workItem from="1766950654316" duration="598000" />
+      <workItem from="1767257835424" duration="4883000" />
+      <workItem from="1767298535409" duration="454000" />
+      <workItem from="1767348482364" duration="31360000" />
+      <workItem from="1767398013708" duration="10162000" />
+      <workItem from="1767560841949" duration="12493000" />
+      <workItem from="1767599603161" duration="2075000" />
+      <workItem from="1767604910940" duration="18845000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -284,7 +367,15 @@
       <option name="project" value="LOCAL" />
       <updated>1766918435594</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Added new encoders and decoders, updates to system">
+      <option name="closed" value="true" />
+      <created>1766925944338</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1766925944338</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -294,7 +385,8 @@
     <MESSAGE value="updates" />
     <MESSAGE value="baseline model is initialized" />
     <MESSAGE value="YAML system finalized, baseline experiments" />
-    <option name="LAST_COMMIT_MESSAGE" value="YAML system finalized, baseline experiments" />
+    <MESSAGE value="Added new encoders and decoders, updates to system" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added new encoders and decoders, updates to system" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -304,21 +396,30 @@
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/representation/decoders/base_decoder.py</url>
-          <option name="timeStamp" value="2" />
+          <url>file://$PROJECT_DIR$/src/representation/tryouts/encoder_OOP_sanity.py</url>
+          <line>2</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_sanity_check.coverage" NAME="decoder_sanity_check Coverage Results" MODIFIED="1766767905023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$test.coverage" NAME="test Coverage Results" MODIFIED="1767616671987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$train_baseline.coverage" NAME="train_baseline Coverage Results" MODIFIED="1766829410675" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/training" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_roberta_opt_classifier_ablations.coverage" NAME="run_yamls_roberta_opt_classifier_ablations Coverage Results" MODIFIED="1767380173699" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_OOP_sanity.coverage" NAME="decoder_OOP_sanity Coverage Results" MODIFIED="1766771721684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$encoder_OOP_sanity.coverage" NAME="encoder_OOP_sanity Coverage Results" MODIFIED="1766771679295" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$inspect_dataset.coverage" NAME="inspect_dataset Coverage Results" MODIFIED="1766765290001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/scripts" />
-    <SUITE FILE_PATH="coverage/clarity_semeval_2026$decoder_sanity_check.coverage" NAME="decoder_sanity_check Coverage Results" MODIFIED="1766767905023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$analyze_baseline.coverage" NAME="analyze_baseline Coverage Results" MODIFIED="1766784683989" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/training" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_roberta_opt_dropout.coverage" NAME="run_yamls_roberta_opt_dropout Coverage Results" MODIFIED="1767372911352" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_model_scale.coverage" NAME="run_yamls_model_scale Coverage Results" MODIFIED="1767385604206" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_roberta_opt_projection_depths.coverage" NAME="run_yamls_roberta_opt_projection_depths Coverage Results" MODIFIED="1767259344938" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$dataset_reveal.coverage" NAME="dataset_reveal Coverage Results" MODIFIED="1767564992369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/helper_scripts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$encoder_sanity_check.coverage" NAME="encoder_sanity_check Coverage Results" MODIFIED="1766767337481" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
     <SUITE FILE_PATH="coverage/clarity_semeval_2026$fusion_sanity_check.coverage" NAME="fusion_sanity_check Coverage Results" MODIFIED="1766769074665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
-    <SUITE FILE_PATH="coverage/clarity_semeval_2026$test.coverage" NAME="test Coverage Results" MODIFIED="1766923955446" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/tryouts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$run_yamls_roberta_opt_fusion_ablations.coverage" NAME="run_yamls_roberta_opt_fusion_ablations Coverage Results" MODIFIED="1767364708023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/scripts" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$final_script.coverage" NAME="final_script Coverage Results" MODIFIED="1767567296758" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/final_script" />
+    <SUITE FILE_PATH="coverage/clarity_semeval_2026$final_script_updated.coverage" NAME="final_script_updated Coverage Results" MODIFIED="1767599692407" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/representation/final_script" />
   </component>
 </project>

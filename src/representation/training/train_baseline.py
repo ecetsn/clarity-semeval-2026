@@ -23,9 +23,8 @@ from src.representation.logging.logger_setup import init_logger
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
-# =========================================================
+
 # CONFIG
-# =========================================================
 @dataclass
 class TrainConfig:
     task: str = "clarity"  # "clarity" or "evasion"
@@ -62,9 +61,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 AMP_DEVICE_TYPE = "cuda" if DEVICE == "cuda" else "cpu"
 
 
-# =========================================================
 # DATASET WRAPPER
-# =========================================================
 class TextLabelDataset(Dataset):
     def __init__(self, texts: List[str], labels: List[int]) -> None:
         if len(texts) != len(labels):
@@ -80,9 +77,7 @@ class TextLabelDataset(Dataset):
         return self.texts[idx], torch.tensor(self.labels[idx], dtype=torch.long)
 
 
-# =========================================================
 # UTILITIES
-# =========================================================
 def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -149,9 +144,7 @@ def save_json(path: Path, payload: Dict[str, Any]) -> None:
         json.dump(to_json_safe(payload), f, indent=2)
 
 
-# =========================================================
 # TRAIN / EVAL
-# =========================================================
 def train_one_epoch(
     *,
     encoder: DistilBERTEncoder,
@@ -258,9 +251,7 @@ def run_validation(
     return result
 
 
-# =========================================================
 # MAIN
-# =========================================================
 def main() -> None:
     logger, log_path = init_logger(
         script_name="train_baseline",
@@ -283,9 +274,7 @@ def main() -> None:
 
     save_json(out_dir / "config.json", asdict(CFG))
 
-    # ---------------------------
     # 1) Load data
-    # ---------------------------
     data_module = QEvasionDataModule(
         dataset_name=CFG.dataset_name,
         validation_size=CFG.validation_size,
@@ -339,9 +328,7 @@ def main() -> None:
         pin_memory=(DEVICE == "cuda"),
     )
 
-    # ---------------------------
     # 2) Models
-    # ---------------------------
     encoder = DistilBERTEncoder().to(DEVICE)
     decoder = GPT2Decoder().to(DEVICE)
 
@@ -355,9 +342,7 @@ def main() -> None:
         num_classes=num_classes,
     ).to(DEVICE)
 
-    # ---------------------------
     # 3) Optimizer / loss
-    # ---------------------------
     optimizer = torch.optim.AdamW(
         fusion_model.parameters(),
         lr=CFG.lr,
@@ -367,9 +352,7 @@ def main() -> None:
 
     scaler = GradScaler(enabled=(CFG.use_amp and DEVICE == "cuda"))
 
-    # ---------------------------
     # 4) Train
-    # ---------------------------
     best_macro_f1 = -1.0
     best_path = out_dir / "best.pt"
 
@@ -432,9 +415,7 @@ def main() -> None:
                 f"Epoch={epoch} | MacroF1={best_macro_f1:.4f} | Path={best_path}"
             )
 
-    # ---------------------------
     # 5) Final summary
-    # ---------------------------
     summary = {
         "task": CFG.task,
         "best_macro_f1": best_macro_f1,

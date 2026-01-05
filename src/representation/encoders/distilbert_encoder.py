@@ -22,7 +22,7 @@ class DistilBERTEncoder(BaseEncoder):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.encoder = AutoModel.from_pretrained(model_name).to(self.device)
 
-        self.output_dim = self.encoder.config.hidden_size  # ✅ ADD THIS
+        self.output_dim = self.encoder.config.hidden_size
 
         if freeze:
             self.freeze()

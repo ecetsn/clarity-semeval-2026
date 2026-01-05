@@ -31,9 +31,7 @@ def evaluate_predictions(
 
     results: Dict[str, object] = {}
 
-    # -----------------------
-    # 1. Scalar metrics
-    # -----------------------
+    # Scalar metrics
     metrics = compute_classification_metrics(
         y_true=list(y_true),
         y_pred=list(y_pred),
@@ -41,9 +39,7 @@ def evaluate_predictions(
     )
     results["metrics"] = metrics
 
-    # -----------------------
-    # 2. Confusion matrix
-    # -----------------------
+    # Confusion matrix
     if compute_cm:
         cm = compute_confusion_matrix(
             y_true=y_true,
@@ -56,9 +52,7 @@ def evaluate_predictions(
     else:
         results["confusion_matrix"] = None
 
-    # -----------------------
-    # 3. Debug heads
-    # -----------------------
+    # Debug heads
     results["y_true_ids_head"] = list(y_true[:head_k])
     results["y_pred_ids_head"] = list(y_pred[:head_k])
 
