@@ -827,6 +827,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import f1_score
 from sklearn.base import clone
 from tqdm import tqdm
+import torch
 
 from src.features.extraction import (
     get_model_independent_feature_names,
@@ -889,7 +890,73 @@ for task in TASKS_60:
     # Load model-independent features
     X_train_indep = storage.load_model_independent_features('train', task=split_task)
     X_dev_indep = storage.load_model_independent_features('dev', task=split_task)
-    X_test_indep = storage.load_model_independent_features('test', task=split_task)
+    
+    # CRITICAL FIX: Test features may be in different locations
+    # Try multiple paths: FinalResultsType1/test, early fusion test_features, or standard location
+    X_test_indep = None
+    
+    # Try 1: FinalResultsType1/test (from notebook 5)
+    test_indep_path_type1 = storage.data_path / f'results/FinalResultsType1/test/X_test_independent_{split_task}.npy'
+    if test_indep_path_type1.exists():
+        X_test_indep = np.load(test_indep_path_type1)
+        print(f"  ✓ Loaded test model-independent features from FinalResultsType1: {X_test_indep.shape}")
+    else:
+        # Try 2: Early fusion test_features directory
+        test_indep_path_early = storage.data_path / f'results/FinalResultsType3/test_features/X_test_independent_{split_task}.npy'
+        if test_indep_path_early.exists():
+            X_test_indep = np.load(test_indep_path_early)
+            print(f"  ✓ Loaded test model-independent features from early fusion: {X_test_indep.shape}")
+        else:
+            # Try 3: Standard location
+            try:
+                X_test_indep = storage.load_model_independent_features('test', task=split_task)
+                print(f"  ✓ Loaded test model-independent features from standard location: {X_test_indep.shape}")
+            except FileNotFoundError:
+                # Try 4: Extract if not found
+                print(f"  ⚠ Test model-independent features not found. Extracting...")
+                from src.features.extraction import featurize_model_independent_features
+                from transformers import pipeline
+                
+                test_ds = storage.load_split('test', task=split_task)
+                
+                # Load sentiment pipeline
+                try:
+                    sentiment_pipeline = pipeline(
+                        "sentiment-analysis",
+                        model="cardiffnlp/twitter-roberta-base-sentiment-latest",
+                        device=0 if torch.cuda.is_available() else -1,
+                        return_all_scores=True
+                    )
+                except Exception as e:
+                    print(f"    ⚠ Could not load sentiment pipeline: {e}")
+                    sentiment_pipeline = None
+                
+                metadata_keys = {
+                    'inaudible': 'inaudible',
+                    'multiple_questions': 'multiple_questions',
+                    'affirmative_questions': 'affirmative_questions'
+                }
+                
+                X_test_indep, _ = featurize_model_independent_features(
+                    test_ds,
+                    question_key='interview_question',
+                    answer_key='interview_answer',
+                    batch_size=32,
+                    show_progress=True,
+                    sentiment_pipeline=sentiment_pipeline,
+                    metadata_keys=metadata_keys,
+                )
+                
+                # Save to FinalResultsType1/test for future use
+                test_indep_path_type1.parent.mkdir(parents=True, exist_ok=True)
+                np.save(test_indep_path_type1, X_test_indep)
+                print(f"  ✓ Extracted and saved test model-independent features: {X_test_indep.shape}")
+                
+                # Clean up sentiment pipeline
+                if sentiment_pipeline is not None:
+                    del sentiment_pipeline
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
 
     # Load model-dependent features from each model
     model_dep_train_list = []
@@ -900,7 +967,31 @@ for task in TASKS_60:
         # Load full features and extract model-dependent portion (first 7)
         X_train_full = storage.load_features(model, split_task, 'train')
         X_dev_full = storage.load_features(model, split_task, 'dev')
-        X_test_full = storage.load_features(model, split_task, 'test')
+        
+        # CRITICAL FIX: Test features may be in different locations
+        # Try multiple paths: FinalResultsType1/test, or standard location
+        X_test_full = None
+        
+        # Try 1: FinalResultsType1/test (from notebook 5)
+        test_feature_path_type1 = storage.data_path / f'results/FinalResultsType1/test/X_{model}_{split_task}_test.npy'
+        if test_feature_path_type1.exists():
+            X_test_full = np.load(test_feature_path_type1)
+            print(f"    ✓ Loaded {model} test features from FinalResultsType1: {X_test_full.shape}")
+        else:
+            # Try 2: Standard location
+            try:
+                X_test_full = storage.load_features(model, split_task, 'test')
+                print(f"    ✓ Loaded {model} test features from standard location: {X_test_full.shape}")
+            except FileNotFoundError:
+                # If not found, we'll need to extract (but this requires GPU and models)
+                # For now, raise an error with helpful message
+                raise FileNotFoundError(
+                    f"Test features not found for model '{model}' and task '{split_task}'.\n"
+                    f"  Checked locations:\n"
+                    f"    1. {test_feature_path_type1}\n"
+                    f"    2. Standard storage location\n"
+                    f"  Please run notebook 5 (Final Evaluation) or early fusion notebook to extract test features first."
+                )
 
         # Extract model-dependent portion (first 7 features)
         model_dep_train_list.append(X_train_full[:, :7])
