@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="Added new encoders and decoders, updates to system">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/representation/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/representation/test.py" afterDir="false" />
-    </list>
+    <list default="true" id="3c9d6fb8-e58b-41bb-a4b5-ce0ac3264fdc" name="Changes" comment="Readme update" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -266,7 +262,7 @@
       <workItem from="1767398013708" duration="10162000" />
       <workItem from="1767560841949" duration="12493000" />
       <workItem from="1767599603161" duration="2075000" />
-      <workItem from="1767604910940" duration="25045000" />
+      <workItem from="1767604910940" duration="25453000" />
     </task>
     <task id="LOCAL-00001" summary="updates">
       <option name="closed" value="true" />
@@ -316,7 +312,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767628106168</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Readme update">
+      <option name="closed" value="true" />
+      <created>1767635359762</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1767635359762</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -327,7 +331,8 @@
     <MESSAGE value="baseline model is initialized" />
     <MESSAGE value="YAML system finalized, baseline experiments" />
     <MESSAGE value="Added new encoders and decoders, updates to system" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added new encoders and decoders, updates to system" />
+    <MESSAGE value="Readme update" />
+    <option name="LAST_COMMIT_MESSAGE" value="Readme update" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
