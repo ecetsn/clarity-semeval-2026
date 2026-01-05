@@ -1765,3 +1765,369 @@ print("="*80)
 print(f"\nResults saved to: {results_dir_type2}")
 print(f"  - Checkpoint directory: {checkpoint_dir}")
 print(f"  - All intermediate results are saved and can be resumed from checkpoint")
+
+# ============================================================================
+# KOD HÜCRESİ 8
+# ==============
+# ============================================================================
+# STEP 6: Generate Summary Report Tables
+# ============================================================================
+# This cell can run independently after Cell 7 completes STEP 5
+# It loads all results from checkpoints and generates report tables
+
+import numpy as np
+import pandas as pd
+import json
+import pickle
+from pathlib import Path
+
+# Check if required variables exist
+if 'storage' not in globals():
+    raise NameError("storage not found. Please run Cell 1 (Setup) first.")
+
+if 'CLARITY_LABELS' not in globals() or 'EVASION_LABELS' not in globals():
+    raise NameError("CLARITY_LABELS and EVASION_LABELS not found. Please run Cell 3 (Configuration) first.")
+
+# Setup directories
+results_dir_type2 = storage.data_path / 'results/FinalResultsType2/classifier_specific'
+checkpoint_dir = results_dir_type2 / 'checkpoint'
+predictions_dir = results_dir_type2 / 'predictions'
+probabilities_dir = results_dir_type2 / 'probabilities'
+metrics_dir = results_dir_type2 / 'metrics'
+tables_dir = results_dir_type2 / 'tables'
+
+tables_dir.mkdir(parents=True, exist_ok=True)
+
+# Helper function to load checkpoints
+def load_checkpoint(filepath):
+    """Load checkpoint file if exists"""
+    if filepath.exists():
+        try:
+            if filepath.suffix == '.pkl':
+                with open(filepath, 'rb') as f:
+                    return pickle.load(f)
+            elif filepath.suffix == '.json':
+                with open(filepath, 'r') as f:
+                    return json.load(f)
+            elif filepath.suffix == '.csv':
+                return pd.read_csv(filepath)
+            elif filepath.suffix == '.npy':
+                return np.load(filepath)
+        except Exception as e:
+            print(f"    ⚠ Warning: Could not load {filepath.name}: {e}")
+            return None
+    return None
+
+# Task order
+TASK_ORDER = ['clarity', 'hierarchical_evasion_to_clarity']
+
+# ========================================================================
+# STEP 6.1: Load Classifier Results from Checkpoints
+# ========================================================================
+print("\n" + "="*80)
+print("STEP 6: GENERATE SUMMARY REPORT TABLES")
+print("="*80)
+print("\n" + "-"*80)
+print("STEP 6.1: Loading Classifier Results from Checkpoints")
+print("-"*80)
+
+classifier_specific_results = {}
+
+for task in TASK_ORDER:
+    classifier_specific_results[task] = {}
+    
+    for clf_name in ['LogisticRegression', 'LinearSVC', 'RandomForest', 'MLP', 'XGBoost', 'LightGBM']:
+        predictions_path = predictions_dir / f'{clf_name}_{task}_predictions.npy'
+        probabilities_path = probabilities_dir / f'{clf_name}_{task}_probabilities.npy'
+        metrics_path = checkpoint_dir / f'metrics_{clf_name}_{task}.json'
+        selected_features_path = checkpoint_dir / f'selected_features_{clf_name}_{task}.json'
+        
+        y_test_pred = load_checkpoint(predictions_path)
+        if y_test_pred is not None:
+            y_test_proba = load_checkpoint(probabilities_path)
+            metrics = load_checkpoint(metrics_path)
+            selected_features = load_checkpoint(selected_features_path)
+            
+            classifier_specific_results[task][clf_name] = {
+                'selected_features': selected_features if selected_features else [],
+                'n_features': len(selected_features) if selected_features else 0,
+                'metrics': metrics if metrics else {},
+                'predictions': y_test_pred,
+                'probabilities': y_test_proba,
+            }
+            print(f"    ✓ Loaded {clf_name} for {task}")
+        else:
+            print(f"    ⚠ {clf_name} for {task} not found")
+
+# ========================================================================
+# STEP 6.2: Collect All Classifier Results (Individual Classifiers)
+# ========================================================================
+print("\n" + "-"*80)
+print("STEP 6.2: Individual Classifier Results")
+print("-"*80)
+
+summary_rows = []
+
+for task in TASK_ORDER:
+    if task not in classifier_specific_results:
+        continue
+    
+    for clf_name, result in classifier_specific_results[task].items():
+        metrics = result.get('metrics', {})
+        n_features = result.get('n_features', 0)
+        
+        summary_rows.append({
+            'classifier': clf_name,
+            'task': task,
+            'n_features': n_features,
+            'macro_f1': metrics.get('macro_f1', 0.0),
+            'accuracy': metrics.get('accuracy', 0.0),
+            'macro_precision': metrics.get('macro_precision', 0.0),
+            'macro_recall': metrics.get('macro_recall', 0.0),
+            'weighted_f1': metrics.get('weighted_f1', 0.0),
+        })
+
+# ========================================================================
+# STEP 6.3: Add Ensemble Results
+# ========================================================================
+print("\n" + "-"*80)
+print("STEP 6.3: Ensemble Results (Weighted Average)")
+print("-"*80)
+
+for task in TASK_ORDER:
+    ensemble_metrics_path = metrics_dir / f'ensemble_evaluation_metrics_{task}.json'
+    ensemble_metrics = load_checkpoint(ensemble_metrics_path)
+    
+    if ensemble_metrics:
+        metrics_dict = ensemble_metrics.get('metrics', {})
+        summary_rows.append({
+            'classifier': 'Ensemble (Weighted)',
+            'task': task,
+            'n_features': 'N/A',
+            'macro_f1': metrics_dict.get('macro_f1', 0.0),
+            'accuracy': metrics_dict.get('accuracy', 0.0),
+            'macro_precision': metrics_dict.get('macro_precision', 0.0),
+            'macro_recall': metrics_dict.get('macro_recall', 0.0),
+            'weighted_f1': metrics_dict.get('weighted_f1', 0.0),
+        })
+        print(f"  ✓ Added ensemble results for {task}")
+    else:
+        print(f"  ⚠ Ensemble results for {task} not found")
+
+# Create summary DataFrame
+df_summary = pd.DataFrame(summary_rows)
+
+if len(df_summary) == 0:
+    print("  ⚠ No results found for summary table")
+else:
+    # Remove duplicates
+    df_summary = df_summary.drop_duplicates(
+        subset=['classifier', 'task'],
+        keep='first'
+    )
+
+    # ========================================================================
+    # STEP 6.4: Detailed Summary Table (All Metrics)
+    # ========================================================================
+    print("\n" + "-"*80)
+    print("STEP 6.4: Detailed Summary Table (All Metrics)")
+    print("-"*80)
+    
+    # Display detailed table
+    print("\nDetailed Summary Table:")
+    try:
+        from IPython.display import display
+        display(df_summary.style.format({
+            'macro_f1': '{:.4f}',
+            'accuracy': '{:.4f}',
+            'macro_precision': '{:.4f}',
+            'macro_recall': '{:.4f}',
+            'weighted_f1': '{:.4f}',
+            'n_features': '{:.0f}' if df_summary['n_features'].dtype in [int, float] else '{}'
+        }))
+    except:
+        print(df_summary.to_string())
+    
+    # Save detailed table
+    detailed_path = tables_dir / 'summary_detailed.csv'
+    df_summary.to_csv(detailed_path, index=False)
+    print(f"\n  ✓ Saved detailed table: {detailed_path.name}")
+    
+    # Save HTML version
+    html_detailed_path = tables_dir / 'summary_detailed.html'
+    df_summary.to_html(html_detailed_path, index=False, float_format='{:.4f}'.format)
+    print(f"  ✓ Saved HTML: {html_detailed_path.name}")
+
+    # ========================================================================
+    # STEP 6.5: Pivot Table (Classifier × Task) - Macro F1
+    # ========================================================================
+    print("\n" + "-"*80)
+    print("STEP 6.5: Pivot Table - Classifier × Task (Macro F1)")
+    print("-"*80)
+    
+    # Create pivot table
+    df_pivot = df_summary.pivot(
+        index='classifier',
+        columns='task',
+        values='macro_f1'
+    )
+    
+    # Reorder columns: clarity first, then hierarchical
+    available_tasks = [t for t in TASK_ORDER if t in df_pivot.columns]
+    remaining_tasks = sorted([t for t in df_pivot.columns if t not in available_tasks])
+    column_order = available_tasks + remaining_tasks
+    df_pivot = df_pivot[column_order]
+    
+    # Display pivot table
+    print("\nPivot Table (Macro F1):")
+    try:
+        display(df_pivot.style.format(precision=4))
+    except:
+        print(df_pivot.to_string())
+    
+    # Save pivot table
+    pivot_path = tables_dir / 'summary_pivot_classifier_wise.csv'
+    df_pivot.to_csv(pivot_path)
+    print(f"\n  ✓ Saved pivot table: {pivot_path.name}")
+    
+    # Save HTML version
+    html_pivot_path = tables_dir / 'summary_pivot_classifier_wise.html'
+    df_pivot.to_html(html_pivot_path, float_format='{:.4f}'.format)
+    print(f"  ✓ Saved HTML: {html_pivot_path.name}")
+
+    # ========================================================================
+    # STEP 6.6: Pivot Table (Classifier × Task) - Accuracy
+    # ========================================================================
+    print("\n" + "-"*80)
+    print("STEP 6.6: Pivot Table - Classifier × Task (Accuracy)")
+    print("-"*80)
+    
+    df_pivot_acc = df_summary.pivot(
+        index='classifier',
+        columns='task',
+        values='accuracy'
+    )
+    
+    df_pivot_acc = df_pivot_acc[column_order]
+    
+    print("\nPivot Table (Accuracy):")
+    try:
+        display(df_pivot_acc.style.format(precision=4))
+    except:
+        print(df_pivot_acc.to_string())
+    
+    pivot_acc_path = tables_dir / 'summary_pivot_accuracy.csv'
+    df_pivot_acc.to_csv(pivot_acc_path)
+    print(f"\n  ✓ Saved pivot table: {pivot_acc_path.name}")
+
+    # ========================================================================
+    # STEP 6.7: Summary by Task (Individual Classifiers Only)
+    # ========================================================================
+    print("\n" + "-"*80)
+    print("STEP 6.7: Summary by Task (Individual Classifiers)")
+    print("-"*80)
+    
+    for task in TASK_ORDER:
+        df_task = df_summary[
+            (df_summary['task'] == task) & 
+            (df_summary['classifier'] != 'Ensemble (Weighted)')
+        ].copy()
+        
+        if len(df_task) == 0:
+            continue
+        
+        print(f"\n  {task.upper()} - Individual Classifiers:")
+        print(f"  {'-'*60}")
+        
+        # Sort by macro_f1 descending
+        df_task = df_task.sort_values('macro_f1', ascending=False)
+        
+        # Display
+        try:
+            display(df_task[['classifier', 'n_features', 'macro_f1', 'accuracy', 'macro_precision', 'macro_recall']].style.format({
+                'macro_f1': '{:.4f}',
+                'accuracy': '{:.4f}',
+                'macro_precision': '{:.4f}',
+                'macro_recall': '{:.4f}',
+                'n_features': '{:.0f}' if df_task['n_features'].dtype in [int, float] else '{}'
+            }))
+        except:
+            print(df_task[['classifier', 'n_features', 'macro_f1', 'accuracy', 'macro_precision', 'macro_recall']].to_string())
+        
+        # Save per-task summary
+        task_path = tables_dir / f'summary_{task}_individual.csv'
+        df_task.to_csv(task_path, index=False)
+        print(f"  ✓ Saved: {task_path.name}")
+
+    # ========================================================================
+    # STEP 6.8: Ensemble Comparison Table
+    # ========================================================================
+    print("\n" + "-"*80)
+    print("STEP 6.8: Ensemble vs Best Individual Classifier")
+    print("-"*80)
+    
+    ensemble_comparison_rows = []
+    
+    for task in TASK_ORDER:
+        # Get best individual classifier
+        df_task_individual = df_summary[
+            (df_summary['task'] == task) & 
+            (df_summary['classifier'] != 'Ensemble (Weighted)')
+        ]
+        
+        if len(df_task_individual) == 0:
+            continue
+        
+        best_individual = df_task_individual.loc[df_task_individual['macro_f1'].idxmax()]
+        
+        # Get ensemble result
+        df_task_ensemble = df_summary[
+            (df_summary['task'] == task) & 
+            (df_summary['classifier'] == 'Ensemble (Weighted)')
+        ]
+        
+        if len(df_task_ensemble) == 0:
+            continue
+        
+        ensemble_result = df_task_ensemble.iloc[0]
+        
+        ensemble_comparison_rows.append({
+            'task': task,
+            'best_classifier': best_individual['classifier'],
+            'best_macro_f1': best_individual['macro_f1'],
+            'best_n_features': best_individual['n_features'],
+            'ensemble_macro_f1': ensemble_result['macro_f1'],
+            'improvement': ensemble_result['macro_f1'] - best_individual['macro_f1'],
+            'ensemble_accuracy': ensemble_result['accuracy'],
+            'best_accuracy': best_individual['accuracy'],
+        })
+    
+    if ensemble_comparison_rows:
+        df_ensemble_comparison = pd.DataFrame(ensemble_comparison_rows)
+        
+        print("\nEnsemble vs Best Individual:")
+        try:
+            display(df_ensemble_comparison.style.format({
+                'best_macro_f1': '{:.4f}',
+                'ensemble_macro_f1': '{:.4f}',
+                'improvement': '{:.4f}',
+                'ensemble_accuracy': '{:.4f}',
+                'best_accuracy': '{:.4f}',
+                'best_n_features': '{:.0f}' if df_ensemble_comparison['best_n_features'].dtype in [int, float] else '{}'
+            }))
+        except:
+            print(df_ensemble_comparison.to_string())
+        
+        comparison_path = tables_dir / 'ensemble_comparison.csv'
+        df_ensemble_comparison.to_csv(comparison_path, index=False)
+        print(f"\n  ✓ Saved: {comparison_path.name}")
+
+print("\n" + "="*80)
+print("SUMMARY REPORT TABLES COMPLETE")
+print("="*80)
+print(f"\nAll tables saved to: {tables_dir}")
+print(f"  - Detailed summary: summary_detailed.csv")
+print(f"  - Pivot (Macro F1): summary_pivot_classifier_wise.csv")
+print(f"  - Pivot (Accuracy): summary_pivot_accuracy.csv")
+print(f"  - Per-task summaries: summary_{{task}}_individual.csv")
+print(f"  - Ensemble comparison: ensemble_comparison.csv")
