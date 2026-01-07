@@ -816,7 +816,7 @@ for model_key in MODELS:
             y_annotator3_clarity_mapped = np.array([
                 evasion_to_clarity(str(ev_label)) for ev_label in y_annotator3_evasion
             ])
-            
+
             # Encode all three annotator clarity labels
             y_annotator1_clarity_encoded = le_clarity.transform(y_annotator1_clarity_mapped)
             y_annotator2_clarity_encoded = le_clarity.transform(y_annotator2_clarity_mapped)
@@ -827,23 +827,23 @@ for model_key in MODELS:
             print(f"\n    Evaluating against ANY annotator match (annotator1 OR annotator2 OR annotator3)...")
             print(f"    NOTE: A prediction is considered correct if it matches ANY of the three annotators")
 
-            annotator_results = {}
+                annotator_results = {}
 
-            # For each classifier, map its evasion predictions to clarity and evaluate
-            for clf_name, clf_result in task_results.items():
-                # Get evasion predictions (string labels)
-                y_evasion_pred = clf_result['predictions']
+                # For each classifier, map its evasion predictions to clarity and evaluate
+                for clf_name, clf_result in task_results.items():
+                    # Get evasion predictions (string labels)
+                    y_evasion_pred = clf_result['predictions']
 
-                # Map evasion predictions to clarity using hierarchical mapping
+                    # Map evasion predictions to clarity using hierarchical mapping
                 # Use annotator1 as the "true" label for the mapping function (it's not used in final evaluation)
-                hierarchical_metrics = evaluate_hierarchical_approach(
-                    np.zeros(len(y_evasion_pred), dtype=int),  # Dummy evasion_true (not used)
-                    y_evasion_pred,  # Evasion predictions (string labels)
+                    hierarchical_metrics = evaluate_hierarchical_approach(
+                        np.zeros(len(y_evasion_pred), dtype=int),  # Dummy evasion_true (not used)
+                        y_evasion_pred,  # Evasion predictions (string labels)
                     y_annotator1_clarity_encoded,  # Dummy clarity_true (not used in final evaluation)
-                    LABEL_LISTS['evasion'],
-                    LABEL_LISTS['clarity']
-                )
-                
+                        LABEL_LISTS['evasion'],
+                        LABEL_LISTS['clarity']
+                    )
+
                 # Get clarity predictions (encoded)
                 y_clarity_pred_encoded = hierarchical_metrics['predictions']
 
@@ -853,9 +853,9 @@ for model_key in MODELS:
                     y_annotator1_clarity_encoded,  # Annotator 1 clarity labels (encoded)
                     y_annotator2_clarity_encoded,  # Annotator 2 clarity labels (encoded)
                     y_annotator3_clarity_encoded,  # Annotator 3 clarity labels (encoded)
-                    LABEL_LISTS['clarity'],
-                    task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
-                )
+                        LABEL_LISTS['clarity'],
+                        task_name=f"TEST_{model_key}_{annotator_name}_{clf_name}"
+                    )
 
                 # Print match statistics
                 match_stats = annotator_metrics.get('match_statistics', {})
@@ -867,66 +867,66 @@ for model_key in MODELS:
                 print(f"        Matches annotator3: {match_stats.get('matches_annotator3', 0)}")
                 print(f"        Matches multiple: {match_stats.get('matches_multiple', 0)}")
 
-                # Decode predictions for print_classification_report (needs string labels)
+                    # Decode predictions for print_classification_report (needs string labels)
                 # For display, use annotator1 as the "true" labels (since we can't display "any match")
                 y_clarity_pred_decoded = le_clarity.inverse_transform(y_clarity_pred_encoded)
                 y_annotator1_clarity_decoded = le_clarity.inverse_transform(y_annotator1_clarity_encoded)
 
                 # Print classification report (using annotator1 as reference for display)
                 print(f"\n      Classification Report (using annotator1 as reference for display):")
-                print_classification_report(
+                    print_classification_report(
                     y_annotator1_clarity_decoded,
-                    y_clarity_pred_decoded,
-                    LABEL_LISTS['clarity'],
-                    task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
-                )
-                
+                        y_clarity_pred_decoded,
+                        LABEL_LISTS['clarity'],
+                        task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}"
+                    )
+
                 # Print the key metric: accuracy with "any match" logic
                 print(f"      ⭐ KEY METRIC - Accuracy (any match): {annotator_metrics['accuracy']:.4f}")
                 print(f"      Macro F1: {annotator_metrics['macro_f1']:.4f}")
                 print(f"      Weighted F1: {annotator_metrics['weighted_f1']:.4f}")
 
                 # Create confusion matrix (using annotator1 as reference)
-                from src.evaluation.plots import plot_confusion_matrix
-                plot_confusion_matrix(
+                    from src.evaluation.plots import plot_confusion_matrix
+                    plot_confusion_matrix(
                     y_annotator1_clarity_encoded,
                     y_clarity_pred_encoded,
-                    LABEL_LISTS['clarity'],
-                    task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
-                    save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
-                )
+                        LABEL_LISTS['clarity'],
+                        task_name=f"TEST - {model_key} - {annotator_name} - {clf_name}",
+                        save_path=str(plots_dir / f'confusion_matrix_{clf_name}_TEST_{model_key}_{annotator_name}.png')
+                    )
 
-                annotator_results[clf_name] = {
+                    annotator_results[clf_name] = {
                     'predictions': y_clarity_pred_encoded,  # Clarity predictions (encoded)
-                    'probabilities': None,  # No probabilities for mapping-based approach
-                    'metrics': annotator_metrics
-                }
+                        'probabilities': None,  # No probabilities for mapping-based approach
+                        'metrics': annotator_metrics
+                    }
 
             # Print comparison table
-            print_results_table(
-                {name: {'metrics': res['metrics']} for name, res in annotator_results.items()},
-                task_name=f"TEST - {model_key} - {annotator_name}",
-                sort_by="Macro F1"
-            )
+                print_results_table(
+                    {name: {'metrics': res['metrics']} for name, res in annotator_results.items()},
+                    task_name=f"TEST - {model_key} - {annotator_name}",
+                    sort_by="Macro F1"
+                )
 
-            # Store results in all_results (will appear in summary tables)
-            if annotator_name not in all_results[model_key]:
-                all_results[model_key][annotator_name] = {}
-            all_results[model_key][annotator_name] = annotator_results
+                # Store results in all_results (will appear in summary tables)
+                if annotator_name not in all_results[model_key]:
+                    all_results[model_key][annotator_name] = {}
+                all_results[model_key][annotator_name] = annotator_results
 
-            # Save results metadata
-            experiment_id = f"FINAL_TEST_{model_key}_{annotator_name}"
-            storage.save_results({
-                'split': 'test',
-                'model': model_key,
-                'task': annotator_name,
+                # Save results metadata
+                experiment_id = f"FINAL_TEST_{model_key}_{annotator_name}"
+                storage.save_results({
+                    'split': 'test',
+                    'model': model_key,
+                    'task': annotator_name,
                 'n_test': len(y_annotator1_clarity_encoded),
                 'evaluation_note': 'Prediction is correct if it matches ANY of annotator1, annotator2, or annotator3',
-                'results': {
-                    name: {'metrics': res['metrics']}
-                    for name, res in annotator_results.items()
-                }
-            }, experiment_id, save_dir='results/FinalResultsType1Results')
+                    'results': {
+                        name: {'metrics': res['metrics']}
+                        for name, res in annotator_results.items()
+                    }
+                }, experiment_id, save_dir='results/FinalResultsType1Results')
 
 # CRITICAL: Save all_results dictionary immediately after evaluation
 # This ensures results are saved even if table generation fails later
