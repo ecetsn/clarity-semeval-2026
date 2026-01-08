@@ -16,6 +16,22 @@ A comprehensive machine learning pipeline for detecting question-answer evasion 
 
 ---
 
+## 📊 Experimental Logs and Results
+
+**All experimental logs, detailed results, predictions, and analysis outputs are available on Google Drive:**
+
+🔗 **[Access Logs and Results on Google Drive](https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing)**
+
+This folder contains:
+- Complete experimental logs from all methodologies
+- Detailed evaluation results and metrics
+- Prediction files and probability distributions
+- Visualization plots and analysis outputs
+- Ablation study results and feature rankings
+- Ensemble evaluation metrics
+
+---
+
 ## 📋 Overview
 
 This project implements a comprehensive pipeline for **SemEval-2024 Task 1: Question-Answer Evasion Detection**. The pipeline extracts **25 Context Tree features** from question-answer pairs using six transformer models and performs classification on two main tasks:
