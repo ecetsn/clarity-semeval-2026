@@ -668,15 +668,20 @@ Evaluate all model×classifier combinations on test set.
 
 **Google Drive Results Folder**: https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing
 
-This folder contains:
-- **checkpoints**: Model checkpoints and saved model states
-- **features**: Extracted feature matrices and feature metadata
-- **models**: Trained model files
+This branch focuses on **Early Fusion, Feature Ablation, and Weighted Ensemble** methodologies. The Google Drive folder contains comprehensive results from ablation studies, early fusion experiments, and weighted ensemble evaluations:
+
+- **results/FinalResultsType2/**: Complete ablation study results including single-feature ablation analysis, feature ranking tables, classifier-specific feature selections (40 features per classifier), greedy selection trajectories, and weighted ensemble predictions
+- **results/FinalResultsType3/**: Early fusion baseline results with 60-feature early fusion (18 model-independent + 42 model-dependent features) evaluated across all 6 classifiers
+- **ablation/**: Detailed ablation study outputs including single-feature evaluation results, feature importance rankings, and classifier-specific feature selection JSON files
+- **checkpoints**: Model checkpoints and saved model states from ablation and ensemble training
+- **features**: Early fusion feature matrices (60 features) and individual model feature matrices
+- **models**: Trained model files from classifier-specific feature selection experiments
 - **paper**: Paper-related documents and drafts
-- **plots**: Visualization plots and figures
-- **predictions**: Prediction outputs for all methodologies
-- **results**: Comprehensive results tables, metrics, and evaluation outputs
+- **plots**: Visualization plots showing ablation trajectories, feature importance, and ensemble performance comparisons
+- **predictions**: Prediction outputs from individual classifiers and weighted ensemble predictions for both Clarity and Evasion tasks
 - **splits**: Dataset splits (train/dev/test) for both Clarity and Evasion tasks
+
+This branch emphasizes the comprehensive ablation study methodology with classifier-specific feature selection (40 features per classifier selected via greedy forward selection) and weighted average ensemble from probabilities. All ablation results, early fusion evaluations, and ensemble outputs are stored in the Google Drive folder.
 
 All results are also stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
 
