@@ -42,8 +42,8 @@ This project implements a pipeline for SemEval-2024 Task 1: Question-Answer Evas
 ### Models
 
 - **BERT** (`bert-base-uncased`)
-- **BERT-Political** (`bert-base-uncased` - placeholder for domain-specific fine-tuning)
-- **BERT-Ambiguity** (`bert-base-uncased` - placeholder for ambiguity-focused fine-tuning)
+- **BERT-Political** (`bucketresearch/politicalBiasBERT`)
+- **BERT-Ambiguity** (`Slomb/Ambig_Question`)
 - **RoBERTa** (`roberta-base`)
 - **DeBERTa** (`microsoft/deberta-v3-base`)
 - **XLNet** (`xlnet-base-cased`)
