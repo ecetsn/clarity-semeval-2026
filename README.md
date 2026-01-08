@@ -668,15 +668,18 @@ Evaluate all model×classifier combinations on test set.
 
 **Google Drive Results Folder**: https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing
 
-This folder contains:
-- **checkpoints**: Model checkpoints and saved model states
-- **features**: Extracted feature matrices and feature metadata
-- **models**: Trained model files
+This branch focuses on **Feature Engineering** methodologies, including the extraction and analysis of 25 Context Tree features from multiple transformer models. The Google Drive folder contains comprehensive feature engineering results:
+
+- **features**: Extracted feature matrices and feature metadata for all 6 transformer models (BERT, BERT-Political, BERT-Ambiguity, RoBERTa, DeBERTa, XLNet) across both Clarity and Evasion tasks
+- **checkpoints**: Model checkpoints and saved model states from feature extraction processes
+- **models**: Trained model files used for feature extraction
 - **paper**: Paper-related documents and drafts
-- **plots**: Visualization plots and figures
-- **predictions**: Prediction outputs for all methodologies
-- **results**: Comprehensive results tables, metrics, and evaluation outputs
+- **plots**: Visualization plots and figures showing feature distributions and relationships
+- **predictions**: Prediction outputs from individual model evaluations
+- **results**: Comprehensive results tables, metrics, and evaluation outputs from feature engineering experiments
 - **splits**: Dataset splits (train/dev/test) for both Clarity and Evasion tasks
+
+This branch emphasizes the development and evaluation of the 25 Context Tree features, including 7 model-dependent features (attention patterns, tokenization) and 18 model-independent features (lexical, semantic, pattern-based). All feature extraction results, development set evaluations, and individual model baseline results are stored in the Google Drive folder.
 
 All results are also stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
 
