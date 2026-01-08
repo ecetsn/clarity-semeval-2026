@@ -1,4 +1,0 @@
-# This directory stores metadata JSON files
-# Metadata files are created in Colab and should be pushed to GitHub
-# Format: metadata/{type}_{split}_{model}_{task}.json
-
