@@ -279,8 +279,8 @@ EVASION_LABELS = ['Claims ignorance', 'Clarification', 'Declining to answer',
 # Model configurations (HuggingFace model names)
 MODEL_CONFIGS = {
     'bert': 'bert-base-uncased',
-    'bert_political': 'bert-base-uncased',  # TODO: Replace with actual political discourse BERT model
-    'bert_ambiguity': 'bert-base-uncased',  # TODO: Replace with actual ambiguity-focused BERT model
+    'bert_political': 'bucketresearch/politicalBiasBERT',
+    'bert_ambiguity': 'Slomb/Ambig_Question',
     'roberta': 'roberta-base',
     'deberta': 'microsoft/deberta-v3-base',
     'xlnet': 'xlnet-base-cased'

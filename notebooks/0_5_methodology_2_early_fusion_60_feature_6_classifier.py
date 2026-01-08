@@ -492,8 +492,8 @@ print(f"✓ GPU: {torch.cuda.get_device_name(0)}")
 # Model configurations
 MODEL_CONFIGS = {
     'bert': 'bert-base-uncased',
-    'bert_political': 'bert-base-uncased',  # Fine-tuned version
-    'bert_ambiguity': 'bert-base-uncased',  # Fine-tuned version
+    'bert_political': 'bucketresearch/politicalBiasBERT',
+    'bert_ambiguity': 'Slomb/Ambig_Question',
     'roberta': 'roberta-base',
     'deberta': 'microsoft/deberta-base',
     'xlnet': 'xlnet-base-cased'
