@@ -377,7 +377,7 @@ This repository implements **three distinct final evaluation methodologies** on 
 
 ### Methodology 1: Individual Model Baseline Evaluation
 
-**Notebook**: `05_final_evaluation.py`  
+**Notebook**: `04_methodology_1__initial_evaluationon_test_set_1_6_6_36.ipynb`  
 **Description**: Baseline evaluation where each of the 6 models is evaluated separately with each of the 6 classifiers, using all 25 features per model. No feature selection or ensemble.
 
 **Experimental Design**: 
@@ -409,11 +409,11 @@ This repository implements **three distinct final evaluation methodologies** on 
 
 ### Methodology 2: Ablation Study with Classifier-Specific Feature Selection and Weighted Ensemble
 
-**Notebook**: `03_5_ablation_study.py`  
+**Notebook**: `06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb`  
 **Description**: Comprehensive ablation study with classifier-specific feature selection. Each classifier gets 40 features selected via greedy forward selection from 60 early fusion features. This methodology produces **three distinct result types**: (1) individual classifier hard label predictions, (2) same hard labels as separate evaluation, and (3) weighted average ensemble from probabilities.
 
 **Prerequisite Step (Development Evaluation)**: 
-- **Notebook**: `03_train_evaluate.ipynb`
+- **Notebook**: `03_train_evaluate_on_dev_set_6_6_36.ipynb`
 - **Purpose**: Development set evaluation (not final evaluation) used for model selection and to guide feature selection
 - **Process**: Train on train set, evaluate on dev set (6 models × 6 classifiers × 2 tasks)
 - **Note**: This is **not a separate methodology** but rather a development step that precedes Methodology 2
@@ -511,7 +511,7 @@ This repository implements **three distinct final evaluation methodologies** on 
 
 ### Methodology 3: Early Fusion Baseline Evaluation
 
-**Notebook**: `0_4_early_fusion.py`  
+**Notebook**: `0_5_methodology_2_early_fusion_60_feature_6_classifier.ipynb`  
 **Description**: Early fusion of all 60 features (18 model-independent + 42 model-dependent from 6 models) evaluated with all 6 classifiers. No feature selection - uses all 60 features. Baseline for comparison with Methodology 2's feature selection approach.
 
 **Process**:
@@ -575,13 +575,12 @@ This repository implements **three distinct final evaluation methodologies** on 
 ```
 semeval-context-tree-modular/
 ├── notebooks/              # Main pipeline notebooks
-│   ├── 00_setup.ipynb                    # Repository setup and Drive mount
 │   ├── 01_data_split.ipynb               # Dataset splitting (Train/Dev/Test)
 │   ├── 02_feature_extraction_separate.ipynb  # Feature extraction per model
-│   ├── 03_train_evaluate.ipynb            # Prerequisite: Dev set evaluation (for Methodology 2)
-│   ├── 03_5_ablation_study.py             # Methodology 2: Ablation study with classifier-specific selection
-│   ├── 0_4_early_fusion.py               # Methodology 3: Early fusion baseline
-│   └── 05_final_evaluation.py             # Methodology 1: Individual model baseline
+│   ├── 03_train_evaluate_on_dev_set_6_6_36.ipynb  # Prerequisite: Dev set evaluation (for Methodology 2)
+│   ├── 04_methodology_1__initial_evaluationon_test_set_1_6_6_36.ipynb  # Methodology 1: Individual model baseline
+│   ├── 0_5_methodology_2_early_fusion_60_feature_6_classifier.ipynb  # Methodology 3: Early fusion baseline
+│   └── 06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb  # Methodology 2: Ablation study with classifier-specific selection
 ├── src/                    # Python source code
 │   ├── data/               # Dataset loading and splitting
 │   ├── features/           # Feature extraction and fusion
@@ -777,13 +776,12 @@ Implements early fusion by concatenating features from multiple models.
 
 ## 📝 Usage
 
-1. **Setup**: Run `00_setup.ipynb` to clone repository and mount Google Drive
-2. **Data Splitting**: Run `01_data_split.ipynb` to create train/dev/test splits
-3. **Feature Extraction**: Run `02_feature_extraction_separate.ipynb` to extract 25 features for each model
-4. **Development Evaluation**: Run `03_train_evaluate.ipynb` (prerequisite for Methodology 2) for dev set results
-5. **Ablation Study**: Run `03_5_ablation_study.py` (Methodology 2) for classifier-specific feature selection with three result types
-6. **Early Fusion**: Run `0_4_early_fusion.py` (Methodology 3) for 60-feature early fusion baseline
-7. **Final Evaluation**: Run `05_final_evaluation.py` (Methodology 1) for individual model baseline evaluation
+1. **Data Splitting**: Run `01_data_split.ipynb` to create train/dev/test splits
+2. **Feature Extraction**: Run `02_feature_extraction_separate.ipynb` to extract 25 features for each model
+3. **Development Evaluation**: Run `03_train_evaluate_on_dev_set_6_6_36.ipynb` (prerequisite for Methodology 2) for dev set results
+4. **Final Evaluation**: Run `04_methodology_1__initial_evaluationon_test_set_1_6_6_36.ipynb` (Methodology 1) for individual model baseline evaluation
+5. **Ablation Study**: Run `06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb` (Methodology 2) for classifier-specific feature selection with three result types
+6. **Early Fusion**: Run `0_5_methodology_2_early_fusion_60_feature_6_classifier.ipynb` (Methodology 3) for 60-feature early fusion baseline
 
 **⚠️ CRITICAL**: Test set is **ONLY** accessed in final evaluation notebooks (Methodologies 1, 2, and 3). Do not access test set in development notebooks.
 
