@@ -5,14 +5,15 @@ Machine learning pipeline for detecting question-answer evasion strategies using
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [The 25 Context Tree Features](#the-25-context-tree-features)
-3. [Three Evaluation Methodologies](#three-evaluation-methodologies)
-4. [Project Structure](#project-structure)
-5. [Pipeline Workflow](#pipeline-workflow)
-6. [Results and Storage Locations](#results-and-storage-locations)
-7. [Core Modules](#core-modules)
-8. [Usage](#usage)
-9. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [The 25 Context Tree Features](#the-25-context-tree-features)
+4. [Three Evaluation Methodologies](#three-evaluation-methodologies)
+5. [Project Structure](#project-structure)
+6. [Pipeline Workflow](#pipeline-workflow)
+7. [Results and Storage Locations](#results-and-storage-locations)
+8. [Core Modules](#core-modules)
+9. [Usage](#usage)
+10. [Requirements](#requirements)
 
 ---
 
@@ -41,8 +42,8 @@ This project implements a pipeline for SemEval-2024 Task 1: Question-Answer Evas
 ### Models
 
 - **BERT** (`bert-base-uncased`)
-- **BERT-Political** (`bert-base-uncased`)
-- **BERT-Ambiguity** (`bert-base-uncased`)
+- **BERT-Political** (`bert-base-uncased` - placeholder for domain-specific fine-tuning)
+- **BERT-Ambiguity** (`bert-base-uncased` - placeholder for ambiguity-focused fine-tuning)
 - **RoBERTa** (`roberta-base`)
 - **DeBERTa** (`microsoft/deberta-v3-base`)
 - **XLNet** (`xlnet-base-cased`)
@@ -55,6 +56,76 @@ This project implements a pipeline for SemEval-2024 Task 1: Question-Answer Evas
 - **MLP** (Multi-Layer Perceptron, with StandardScaler)
 - **XGBoost**
 - **LightGBM**
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- CUDA-capable GPU (recommended for transformer models)
+- Google Colab account (for Drive integration) or local setup with Google Drive API
+
+### Setup Instructions
+
+#### Option 1: Google Colab (Recommended)
+
+1. Open Google Colab and create a new notebook
+2. Clone the repository:
+   ```python
+   !git clone https://github.com/EonTechie/semeval-context-tree-modular.git
+   ```
+3. Mount Google Drive:
+   ```python
+   from google.colab import drive
+   drive.mount('/content/drive')
+   ```
+4. Install dependencies (each notebook includes installation cells):
+   ```python
+   !pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+   !pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
+   ```
+
+#### Option 2: Local Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/EonTechie/semeval-context-tree-modular.git
+   cd semeval-context-tree-modular
+   ```
+
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install torch torchvision torchaudio
+   pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
+   ```
+
+4. Configure Google Drive API (if using local storage):
+   - Follow [Google Drive API setup guide](https://developers.google.com/drive/api/quickstart/python)
+   - Place credentials in the project root
+
+### Dependencies
+
+The project requires the following Python packages:
+
+- **PyTorch** (>=1.12.0): Deep learning framework for transformer models
+- **transformers** (>=4.20.0): HuggingFace transformers library
+- **datasets** (>=2.0.0): HuggingFace datasets library
+- **scikit-learn** (>=1.0.0): Machine learning classifiers and utilities
+- **pandas** (>=1.3.0): Data manipulation
+- **numpy** (>=1.21.0): Numerical computations
+- **xgboost** (>=1.6.0): XGBoost classifier
+- **lightgbm** (>=3.3.0): LightGBM classifier
+- **tqdm** (>=4.64.0): Progress bars
+- **matplotlib** (>=3.5.0): Plotting
+- **seaborn** (>=0.12.0): Statistical visualizations
 
 ---
 
@@ -611,6 +682,10 @@ Implements early fusion by concatenating features from multiple models.
 
 ## Usage
 
+### Running the Complete Pipeline
+
+To reproduce all experiments, run the notebooks in the following order:
+
 1. **Data Splitting**: Run `01_data_split.ipynb` to create train/dev/test splits
 2. **Feature Extraction**: Run `02_feature_extraction_separate.ipynb` to extract 25 features for each model
 3. **Development Evaluation**: Run `03_train_evaluate_on_dev_set_6_6_36.ipynb` (prerequisite for Methodology 2) for dev set results
@@ -618,19 +693,72 @@ Implements early fusion by concatenating features from multiple models.
 5. **Methodology 2**: Run `0_5_methodology_2_early_fusion_60_feature_6_classifier.py` for early fusion with classifier-specific feature selection
 6. **Methodology 3**: Run `06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb` for 60-feature early fusion baseline
 
+### Running Individual Methodologies
+
+Each methodology can be run independently if the prerequisite steps are completed:
+
+- **Methodology 1**: Requires steps 1-2 (data splitting and feature extraction)
+- **Methodology 2**: Requires steps 1-3 (data splitting, feature extraction, and dev evaluation)
+- **Methodology 3**: Requires steps 1-2 (data splitting and feature extraction)
+
+### Command Line Execution
+
+For Python scripts (`.py` files), you can run them directly:
+
+```bash
+# From the notebooks directory
+python 04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py
+python 0_5_methodology_2_early_fusion_60_feature_6_classifier.py
+```
+
 **CRITICAL**: Test set is **ONLY** accessed in final evaluation notebooks (Methodologies 1, 2, and 3). Do not access test set in development notebooks.
 
 ---
 
 ## Requirements
 
-- Python 3.8+
-- PyTorch (with CUDA support recommended)
-- Transformers (HuggingFace)
-- scikit-learn
-- pandas, numpy
-- XGBoost, LightGBM
-- Google Colab (for Drive integration) or local setup with Google Drive API
+### System Requirements
+- Python 3.8 or higher
+- CUDA-capable GPU (recommended for transformer models)
+- Minimum 16GB RAM (32GB recommended)
+- Google Colab Pro or local machine with sufficient resources
+
+### Python Packages
+
+Install all dependencies using:
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
+```
+
+Or create a `requirements.txt` file with:
+
+```
+torch>=1.12.0
+torchvision>=0.13.0
+torchaudio>=0.12.0
+transformers>=4.20.0
+datasets>=2.0.0
+scikit-learn>=1.0.0
+pandas>=1.3.0
+numpy>=1.21.0
+xgboost>=1.6.0
+lightgbm>=3.3.0
+tqdm>=4.64.0
+matplotlib>=3.5.0
+seaborn>=0.12.0
+```
+
+### Google Colab Setup
+
+If using Google Colab, each notebook includes setup cells that:
+1. Clone the repository
+2. Mount Google Drive
+3. Install required packages
+4. Configure paths
+
+Simply run the setup cells at the beginning of each notebook.
 
 ## Key Features
 
