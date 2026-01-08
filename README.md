@@ -1,25 +1,24 @@
 # SemEval-2024 Task 1: Question-Answer Evasion Detection
 
-Machine learning pipeline for detecting question-answer evasion strategies using 25 Context Tree features extracted from multiple transformer models. This repository implements three evaluation methodologies for the SemEval-2024 Task 1 competition.
+A comprehensive machine learning pipeline for detecting question-answer evasion strategies using **25 Context Tree features** extracted from multiple transformer models. This repository implements **four distinct evaluation methodologies** for the SemEval-2024 Task 1 competition.
 
-## Table of Contents
+## 📋 Table of Contents
 
 1. [Overview](#overview)
-2. [Installation](#installation)
-3. [The 25 Context Tree Features](#the-25-context-tree-features)
-4. [Three Evaluation Methodologies](#three-evaluation-methodologies)
-5. [Project Structure](#project-structure)
-6. [Pipeline Workflow](#pipeline-workflow)
-7. [Results and Storage Locations](#results-and-storage-locations)
-8. [Core Modules](#core-modules)
-9. [Usage](#usage)
-10. [Requirements](#requirements)
+2. [The 25 Context Tree Features](#the-25-context-tree-features)
+3. [Four Evaluation Methodologies](#four-evaluation-methodologies)
+4. [Project Structure](#project-structure)
+5. [Pipeline Workflow](#pipeline-workflow)
+6. [Results and Storage Locations](#results-and-storage-locations)
+7. [Core Modules](#core-modules)
+8. [Usage](#usage)
+9. [Requirements](#requirements)
 
 ---
 
-## Overview
+## 📋 Overview
 
-This project implements a pipeline for SemEval-2024 Task 1: Question-Answer Evasion Detection. The pipeline extracts 25 Context Tree features from question-answer pairs using six transformer models and performs classification on two main tasks:
+This project implements a comprehensive pipeline for **SemEval-2024 Task 1: Question-Answer Evasion Detection**. The pipeline extracts **25 Context Tree features** from question-answer pairs using six transformer models and performs classification on two main tasks:
 
 ### Tasks
 
@@ -59,79 +58,9 @@ This project implements a pipeline for SemEval-2024 Task 1: Question-Answer Evas
 
 ---
 
-## Installation
+## 🔬 The 25 Context Tree Features
 
-### Prerequisites
-
-- Python 3.8 or higher
-- CUDA-capable GPU (recommended for transformer models)
-- Google Colab account (for Drive integration) or local setup with Google Drive API
-
-### Setup Instructions
-
-#### Option 1: Google Colab (Recommended)
-
-1. Open Google Colab and create a new notebook
-2. Clone the repository:
-   ```python
-   !git clone https://github.com/EonTechie/semeval-context-tree-modular.git
-   ```
-3. Mount Google Drive:
-   ```python
-   from google.colab import drive
-   drive.mount('/content/drive')
-   ```
-4. Install dependencies (each notebook includes installation cells):
-   ```python
-   !pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-   !pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
-   ```
-
-#### Option 2: Local Setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/EonTechie/semeval-context-tree-modular.git
-   cd semeval-context-tree-modular
-   ```
-
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install torch torchvision torchaudio
-   pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
-   ```
-
-4. Configure Google Drive API (if using local storage):
-   - Follow [Google Drive API setup guide](https://developers.google.com/drive/api/quickstart/python)
-   - Place credentials in the project root
-
-### Dependencies
-
-The project requires the following Python packages:
-
-- **PyTorch** (>=1.12.0): Deep learning framework for transformer models
-- **transformers** (>=4.20.0): HuggingFace transformers library
-- **datasets** (>=2.0.0): HuggingFace datasets library
-- **scikit-learn** (>=1.0.0): Machine learning classifiers and utilities
-- **pandas** (>=1.3.0): Data manipulation
-- **numpy** (>=1.21.0): Numerical computations
-- **xgboost** (>=1.6.0): XGBoost classifier
-- **lightgbm** (>=3.3.0): LightGBM classifier
-- **tqdm** (>=4.64.0): Progress bars
-- **matplotlib** (>=3.5.0): Plotting
-- **seaborn** (>=0.12.0): Statistical visualizations
-
----
-
-## The 25 Context Tree Features
-
-The pipeline extracts 25 Context Tree features from each question-answer pair. These features are divided into 7 model-dependent features (require transformer model) and 18 model-independent features (text-based only).
+The pipeline extracts **25 Context Tree features** from each question-answer pair. These features are divided into **7 model-dependent features** (require transformer model) and **18 model-independent features** (text-based only).
 
 ### Model-Dependent Features (7 features)
 
@@ -141,11 +70,19 @@ These features require a transformer model to extract attention patterns and tok
 - **Description**: Number of tokens in the question after tokenization by the model
 - **Formula**: `count(question_tokens)` where tokens are model-specific (e.g., BERT uses WordPiece)
 - **Range**: Integer ≥ 0
+- **When it's better**: Higher values indicate longer, more complex questions. Useful for distinguishing between simple yes/no questions and complex multi-part questions.
+- **Example**: 
+  - Question: "What is your opinion?" → ~5 tokens
+  - Question: "Can you explain the detailed process of how this policy was developed and what factors influenced the decision-making?" → ~20 tokens
 
 #### 2. `answer_model_token_count`
 - **Description**: Number of tokens in the answer after tokenization
 - **Formula**: `count(answer_tokens)`
 - **Range**: Integer ≥ 0
+- **When it's better**: Longer answers may indicate more detailed responses (Clear Reply) or verbose evasion (General, Dodging). Shorter answers may indicate direct refusals (Declining to answer) or brief clarifications.
+- **Example**:
+  - Answer: "No comment." → ~2 tokens
+  - Answer: "I would need to review the specific details of that policy before providing a comprehensive response." → ~15 tokens
 
 #### 3. `attention_mass_q_to_a_per_qtoken`
 - **Description**: Average attention mass from question tokens to answer tokens, normalized by question token count
@@ -154,7 +91,11 @@ These features require a transformer model to extract attention patterns and tok
   attention_mass_q_to_a_per_qtoken = Σ(attention[q_i, a_j]) / |Q|
   ```
   where `attention[q_i, a_j]` is the attention weight from question token `q_i` to answer token `a_j`, summed over all question-answer token pairs, and `|Q|` is the number of question tokens.
-- **Range**: [0, 1]
+- **Range**: [0, 1] (normalized attention mass)
+- **When it's better**: Higher values indicate the model focuses more on the answer when processing the question. This is useful for detecting when answers are relevant to questions (Clear Reply) vs. irrelevant (Clear Non-Reply).
+- **Example**: 
+  - High value: Question "What is your policy?" and Answer "Our policy is X" → model attends strongly from question to answer
+  - Low value: Question "What is your policy?" and Answer "I cannot comment" → model attends weakly
 
 #### 4. `attention_mass_a_to_q_per_atoken`
 - **Description**: Average attention mass from answer tokens to question tokens, normalized by answer token count
@@ -164,6 +105,10 @@ These features require a transformer model to extract attention patterns and tok
   ```
   where `attention[a_i, q_j]` is the attention weight from answer token `a_i` to question token `q_j`, and `|A|` is the number of answer tokens.
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate the answer references the question more. Useful for detecting direct answers (Explicit) vs. evasive answers (Dodging, Deflection).
+- **Example**:
+  - High value: Answer "The policy you asked about is..." → model attends back to question
+  - Low value: Answer "I cannot discuss that topic" → model doesn't attend back to question
 
 #### 5. `focus_token_to_answer_strength`
 - **Description**: Average maximum attention strength from focus tokens (top-k most central question tokens) to answer tokens
@@ -175,6 +120,10 @@ These features require a transformer model to extract attention patterns and tok
   ```
   where focus tokens are the top-8 most central question tokens (by incoming + outgoing attention).
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate that key question words strongly attend to the answer. Useful for detecting when answers address the core of the question (Clear Reply) vs. peripheral aspects (Partial/half-answer).
+- **Example**:
+  - High value: Question "What is your policy on X?" (focus: "policy", "X") → Answer "Our policy is..." → strong attention
+  - Low value: Question "What is your policy?" → Answer "I need clarification" → weak attention
 
 #### 6. `answer_token_to_focus_strength`
 - **Description**: Average maximum attention strength from answer tokens to focus tokens
@@ -183,6 +132,10 @@ These features require a transformer model to extract attention patterns and tok
   answer_token_to_focus_strength = mean(max(attention[a_i, focus_j] for all focus_j))
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate answer tokens attend to key question words. Useful for detecting direct answers (Explicit) vs. evasive answers (Dodging, General).
+- **Example**:
+  - High value: Answer "The policy is..." attends to question focus "policy"
+  - Low value: Answer "I cannot comment" doesn't attend to question focus
 
 #### 7. `focus_token_coverage_ratio`
 - **Description**: Fraction of focus tokens that have strong attention (>0.08 threshold) to at least one answer token
@@ -191,6 +144,10 @@ These features require a transformer model to extract attention patterns and tok
   focus_token_coverage_ratio = count(focus_i where max(attention[focus_i, a_j]) > 0.08) / |focus_tokens|
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate more focus tokens are "covered" by the answer. Useful for detecting comprehensive answers (Clear Reply) vs. partial answers (Partial/half-answer, Ambivalent).
+- **Example**:
+  - High value: All key question words are addressed in the answer
+  - Low value: Only some key question words are addressed
 
 ---
 
@@ -208,6 +165,10 @@ These features are extracted from text only and are shared across all models.
   ```
   Uses unigrams and bigrams, English stopwords removed, min_df=2.
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate lexical overlap between question and answer. Useful for detecting direct answers (Explicit, Clear Reply) vs. evasive answers with different vocabulary (Dodging, Deflection).
+- **Example**:
+  - High value: Q: "What is your policy?" A: "Our policy is..." → high lexical overlap
+  - Low value: Q: "What is your policy?" A: "I cannot comment on that" → low lexical overlap
 
 #### 9. `content_word_jaccard_q_a`
 - **Description**: Jaccard similarity of content words (non-stopwords) between question and answer
@@ -218,6 +179,10 @@ These features are extracted from text only and are shared across all models.
   jaccard = |content_words_q ∩ content_words_a| / |content_words_q ∪ content_words_a|
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate shared content vocabulary. Useful for detecting answers that use similar terminology to the question (Clear Reply) vs. answers with different terminology (General, Deflection).
+- **Example**:
+  - High value: Q: "policy, budget, allocation" A: "policy, budget, allocation" → Jaccard = 1.0
+  - Low value: Q: "policy, budget" A: "cannot, comment" → Jaccard = 0.0
 
 #### 10. `question_content_coverage_in_answer`
 - **Description**: Fraction of question content words that appear in the answer
@@ -226,6 +191,10 @@ These features are extracted from text only and are shared across all models.
   coverage = |content_words_q ∩ content_words_a| / |content_words_q|
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate the answer mentions more question terms. Useful for detecting comprehensive answers (Clear Reply) vs. answers that ignore question terms (Clear Non-Reply, Dodging).
+- **Example**:
+  - High value: Q: "policy, budget, allocation" → A: "policy, budget, allocation" → coverage = 1.0
+  - Low value: Q: "policy, budget" → A: "I cannot comment" → coverage = 0.0
 
 #### 11. `answer_content_word_ratio`
 - **Description**: Ratio of content words (non-stopwords) to total words in the answer
@@ -234,6 +203,10 @@ These features are extracted from text only and are shared across all models.
   ratio = count(content_words) / count(all_words)
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate more informative, content-rich answers. Useful for detecting substantive answers (Explicit, Clear Reply) vs. formulaic evasions (Declining to answer, Claims ignorance).
+- **Example**:
+  - High value: "Our policy allocates 50% of the budget to education" → high content word ratio
+  - Low value: "I cannot comment on that" → low content word ratio (mostly stopwords)
 
 #### 12. `answer_digit_groups_per_word`
 - **Description**: Number of digit groups (consecutive digits) per word in the answer
@@ -244,6 +217,10 @@ These features are extracted from text only and are shared across all models.
   ratio = digit_groups / max(1, words)
   ```
 - **Range**: [0, ∞)
+- **When it's better**: Higher values indicate answers with specific numbers/statistics. Useful for detecting detailed answers (Explicit, Clear Reply) vs. vague answers (General, Implicit).
+- **Example**:
+  - High value: "The budget is $50 million, allocated 30% to education" → 2 digit groups / 10 words = 0.2
+  - Low value: "I cannot provide specific numbers" → 0 digit groups
 
 #### 13. `refusal_pattern_match_count`
 - **Description**: Count of refusal pattern matches in the answer (case-insensitive regex)
@@ -254,6 +231,10 @@ These features are extracted from text only and are shared across all models.
   - `r"\bI (decline|refuse)\b"`
   - (8 total patterns)
 - **Range**: Integer ≥ 0
+- **When it's better**: Higher values indicate explicit refusals. Strong indicator for "Declining to answer" and "Claims ignorance" classes.
+- **Example**:
+  - High value: "I cannot comment on that" → 1 match
+  - Low value: "Our policy is..." → 0 matches
 
 #### 14. `clarification_pattern_match_count`
 - **Description**: Count of clarification request patterns in the answer
@@ -263,16 +244,28 @@ These features are extracted from text only and are shared across all models.
   - `r"\b(i )?(don'?t|do not) understand\b"`
   - (25+ total patterns)
 - **Range**: Integer ≥ 0
+- **When it's better**: Higher values indicate clarification requests. Strong indicator for "Clarification" class.
+- **Example**:
+  - High value: "Can you clarify what you mean?" → 1 match
+  - Low value: "Our policy is..." → 0 matches
 
 #### 15. `answer_question_mark_count`
 - **Description**: Number of question marks in the answer
 - **Formula**: `count("?")` in answer text
 - **Range**: Integer ≥ 0
+- **When it's better**: Higher values indicate questions in the answer. Useful for detecting clarification requests (Clarification) or rhetorical questions (Dodging, Deflection).
+- **Example**:
+  - High value: "What do you mean by that?" → 1 question mark
+  - Low value: "Our policy is clear." → 0 question marks
 
 #### 16. `answer_word_count`
 - **Description**: Total word count in the answer
 - **Formula**: `count(re.findall(r"[A-Za-z']+", answer))`
 - **Range**: Integer ≥ 0
+- **When it's better**: Longer answers may indicate detailed responses (Explicit, Clear Reply) or verbose evasions (General, Dodging). Shorter answers may indicate direct refusals (Declining to answer).
+- **Example**:
+  - High value: "Our policy allocates 50% of the budget to education, with 30% to healthcare..." → 15 words
+  - Low value: "No comment." → 2 words
 
 #### 17. `answer_is_short_question`
 - **Description**: Binary feature: 1 if answer has question mark AND ≤10 words, else 0
@@ -281,6 +274,10 @@ These features are extracted from text only and are shared across all models.
   answer_is_short_question = 1.0 if (question_mark_count > 0 and word_count <= 10) else 0.0
   ```
 - **Range**: {0, 1}
+- **When it's better**: Value of 1 indicates short clarification requests. Strong indicator for "Clarification" class.
+- **Example**:
+  - Value 1: "What do you mean?" → 4 words, 1 question mark
+  - Value 0: "Our policy is clear." → no question mark
 
 #### 18. `answer_negation_ratio`
 - **Description**: Ratio of negation words to total words in the answer
@@ -290,6 +287,10 @@ These features are extracted from text only and are shared across all models.
   ratio = count(negation_words in answer) / count(all_words)
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate negative statements. Useful for detecting refusals (Declining to answer, Claims ignorance) vs. affirmative answers (Explicit).
+- **Example**:
+  - High value: "I cannot comment on that" → 1 negation / 4 words = 0.25
+  - Low value: "Our policy is clear" → 0 negations
 
 #### 19. `answer_hedge_ratio`
 - **Description**: Ratio of hedge words (uncertainty markers) to total words
@@ -299,21 +300,33 @@ These features are extracted from text only and are shared across all models.
   ratio = count(hedge_words in answer) / count(all_words)
   ```
 - **Range**: [0, 1]
+- **When it's better**: Higher values indicate uncertain or vague language. Useful for detecting ambiguous answers (Ambivalent, Implicit, General) vs. definitive answers (Explicit, Clear Reply).
+- **Example**:
+  - High value: "It seems like the policy might be around 50%" → 2 hedges / 8 words = 0.25
+  - Low value: "The policy is 50%" → 0 hedges
 
 #### 20. `question_sentiment_polarity`
 - **Description**: Sentiment polarity of the question (positive - negative)
 - **Formula**:
   ```
-  sentiment_scores = sentiment_pipeline(question)
+  sentiment_scores = sentiment_pipeline(question)  # Returns {positive: 0.7, negative: 0.2, neutral: 0.1}
   polarity = positive_score - negative_score
   ```
   Uses `cardiffnlp/twitter-roberta-base-sentiment-latest` model.
 - **Range**: [-1, 1]
+- **When it's better**: Positive values indicate positive sentiment questions, negative values indicate negative sentiment. Useful for detecting how question tone affects answer style (e.g., negative questions may elicit defensive answers).
+- **Example**:
+  - Positive: "What are the benefits of this policy?" → polarity ≈ 0.5
+  - Negative: "Why is this policy so problematic?" → polarity ≈ -0.5
 
 #### 21. `answer_sentiment_polarity`
 - **Description**: Sentiment polarity of the answer (positive - negative)
 - **Formula**: Same as question sentiment polarity, applied to answer text
 - **Range**: [-1, 1]
+- **When it's better**: Positive values indicate positive sentiment answers. Useful for detecting defensive or evasive answers (negative polarity) vs. cooperative answers (positive polarity).
+- **Example**:
+  - Positive: "Our policy is beneficial and well-received" → polarity ≈ 0.6
+  - Negative: "I cannot comment on that problematic issue" → polarity ≈ -0.3
 
 #### 22. `answer_char_per_sentence`
 - **Description**: Average characters per sentence in the answer
@@ -323,27 +336,37 @@ These features are extracted from text only and are shared across all models.
   char_per_sentence = total_characters / max(1, len(sentences))
   ```
 - **Range**: [0, ∞)
+- **When it's better**: Higher values indicate longer, more complex sentences. Useful for detecting detailed explanations (Explicit, Clear Reply) vs. brief responses (Declining to answer, Claims ignorance).
+- **Example**:
+  - High value: "Our policy allocates 50% of the budget to education, with 30% to healthcare, and the remaining 20% to infrastructure." → 1 sentence, 120 chars → 120 chars/sentence
+  - Low value: "No comment." → 1 sentence, 10 chars → 10 chars/sentence
 
 #### 23. `inaudible`
 - **Description**: Binary metadata feature indicating if the question/answer was inaudible
 - **Formula**: Directly from dataset metadata (boolean)
 - **Range**: {0, 1}
+- **When it's better**: Value of 1 indicates audio quality issues. May correlate with "Clarification" requests or incomplete answers.
+- **Example**: From dataset metadata
 
 #### 24. `multiple_questions`
 - **Description**: Binary metadata feature indicating if the question contains multiple sub-questions
 - **Formula**: Directly from dataset metadata (boolean)
 - **Range**: {0, 1}
+- **When it's better**: Value of 1 indicates complex questions. May correlate with "Partial/half-answer" (only some sub-questions answered) or "Clarification" requests.
+- **Example**: From dataset metadata
 
 #### 25. `affirmative_questions`
 - **Description**: Binary metadata feature indicating if the question is affirmative (yes/no style)
 - **Formula**: Directly from dataset metadata (boolean)
 - **Range**: {0, 1}
+- **When it's better**: Value of 1 indicates yes/no questions. May correlate with direct answers (Explicit) vs. evasive answers (Dodging, General).
+- **Example**: From dataset metadata
 
 ---
 
-## Three Evaluation Methodologies
+## 🎯 Three Final Evaluation Methodologies
 
-This repository implements three evaluation methodologies on the test set (held-out, never used for training or development). Each methodology uses different feature selection strategies and ensemble approaches.
+This repository implements **three distinct final evaluation methodologies** on the **test set** (held-out, never used for training or development). Each methodology uses different feature selection strategies and ensemble approaches.
 
 **Experimental Setup**: 
 - **6 Transformer Models**: BERT, BERT-Political, BERT-Ambiguity, RoBERTa, DeBERTa, XLNet
@@ -354,7 +377,7 @@ This repository implements three evaluation methodologies on the test set (held-
 
 ### Methodology 1: Individual Model Baseline Evaluation
 
-**Notebook**: `04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py`  
+**Notebook**: `05_final_evaluation.py`  
 **Description**: Baseline evaluation where each of the 6 models is evaluated separately with each of the 6 classifiers, using all 25 features per model. No feature selection or ensemble.
 
 **Experimental Design**: 
@@ -384,20 +407,22 @@ This repository implements three evaluation methodologies on the test set (held-
 
 ---
 
-### Methodology 2: Early Fusion with Classifier-Specific Feature Selection
+### Methodology 2: Ablation Study with Classifier-Specific Feature Selection and Weighted Ensemble
 
-**Notebook**: `0_5_methodology_2_early_fusion_60_feature_6_classifier.py`  
-**Description**: Early fusion of 60 features (18 model-independent + 42 model-dependent from 6 models) with classifier-specific feature selection. Each classifier gets 40 features selected via greedy forward selection.
+**Notebook**: `03_5_ablation_study.py`  
+**Description**: Comprehensive ablation study with classifier-specific feature selection. Each classifier gets 40 features selected via greedy forward selection from 60 early fusion features. This methodology produces **three distinct result types**: (1) individual classifier hard label predictions, (2) same hard labels as separate evaluation, and (3) weighted average ensemble from probabilities.
 
 **Prerequisite Step (Development Evaluation)**: 
-- **Notebook**: `03_train_evaluate_on_dev_set_6_6_36.ipynb`
-- **Purpose**: Development set evaluation used for model selection and to guide feature selection
+- **Notebook**: `03_train_evaluate.ipynb`
+- **Purpose**: Development set evaluation (not final evaluation) used for model selection and to guide feature selection
 - **Process**: Train on train set, evaluate on dev set (6 models × 6 classifiers × 2 tasks)
+- **Note**: This is **not a separate methodology** but rather a development step that precedes Methodology 2
 
 **Experimental Design**:
 - **60 Early Fusion Features**: 18 model-independent + 42 model-dependent (6 models × 7 features)
 - **40 Features per Classifier**: Selected via greedy forward selection (global top 20 + classifier-specific greedy 20)
-- **6 classifiers** × **2 tasks** = **12 classifier-task combinations**
+- **6 classifiers** × **2 tasks** = **12 classifier-task combinations** for individual results
+- **2 tasks** = **2 ensemble results** (one per task)
 
 **Process**:
 
@@ -407,43 +432,87 @@ This repository implements three evaluation methodologies on the test set (held-
 - Compare classifier performance to guide feature selection
 - **Output**: `predictions/pred_dev_{model}_{classifier}_{task}.npy`
 
-#### Step 2: Early Fusion Feature Creation (60 features)
+#### Step 2: Single-Feature Ablation
+- Evaluate each of the 25 features individually across all 36 model×classifier combinations
+- Compute statistics: min, median, mean, std, max F1
+- Calculate weighted score: `0.5 * mean_f1 + 0.3 * best_f1 + 0.2 * (1 - normalized_std)`
+- Rank features by weighted score
+
+#### Step 3: Early Fusion Feature Creation (60 features)
 - **18 model-independent features** (shared across all models)
 - **42 model-dependent features** (6 models × 7 features each)
 - Total: **60 features** via concatenation
 
-#### Step 3: Classifier-Specific Feature Selection
+#### Step 4: Classifier-Specific Feature Selection
 - **Global Top 20**: Selected from weighted score ranking (across all models)
 - **Classifier-Specific Greedy 20**: Greedy forward selection for each classifier (starts with global top 20, adds up to 20 more)
 - **Final Feature Set**: 40 features per classifier (global 20 + classifier-specific greedy 20)
 
-#### Step 4: Training and Evaluation on Test Set
+#### Step 5: Training and Evaluation on Test Set
 - Train on Train+Dev combined data
 - Evaluate on **test set** (final evaluation)
 - Each classifier uses its own 40 selected features
+
+#### Step 6: Three Result Types
+
+**Result Type 1: Individual Classifier Hard Label Predictions**
+- Each classifier produces hard label predictions using its own 40 selected features
+- **6 classifiers** × **2 tasks** = **12 classifier-task combinations**
+- **Output**: `predictions/{classifier}_{task}_predictions.npy`
+
+**Result Type 2: Same Hard Labels (Separate Evaluation)**
+- Same 12 hard label predictions from Result Type 1, but evaluated separately as individual classifier results
+- Used for comparing individual classifier performance
+- **Output**: Same files as Result Type 1, but with separate metrics
+
+**Result Type 3: Weighted Average Ensemble from Probabilities**
+- Collect probabilities from all 6 classifiers
+- Weight each classifier by its Macro F1 score on test set: `weight_i = MacroF1_i / Σ(MacroF1_j)`
+- Compute weighted average: `ensemble_proba = Σ(weight_i * proba_i)`
+- Generate hard labels from weighted average probabilities: `argmax(ensemble_proba)`
+- **2 tasks** = **2 ensemble results** (one per task)
+- **Output**: 
+  - `predictions/ensemble_hard_labels_from_weighted_proba_{task}.npy`
+  - `probabilities/ensemble_weighted_average_probabilities_{task}.npy`
 
 **Feature Selection**: 
 - **40 features per classifier** (selected via greedy forward selection)
 - Global top 20 + classifier-specific greedy 20
 
-**Ensemble Strategy**: Weighted average ensemble from probabilities (weights = Macro F1 scores)
+**Ensemble Strategy**: 
+- **Result Type 1 & 2**: Individual classifier hard label predictions (no ensemble)
+- **Result Type 3**: Weighted average ensemble from probabilities (weights = Macro F1 scores)
 
 **Evaluation Set**: Test set (final evaluation)
 
 **Results Location** (Google Drive):
-- **Predictions**: `results/FinalResultsType2/predictions/{classifier}_{task}_predictions.npy`
-- **Probabilities**: `results/FinalResultsType2/probabilities/{classifier}_{task}_probabilities.npy`
-- **Ensemble**: `results/FinalResultsType2/predictions/ensemble_hard_labels_from_weighted_proba_{task}.npy`
-- **Metrics**: `results/FinalResultsType2/metrics/ensemble_evaluation_metrics_{task}.json`
+- **Ablation Results**: `results/FinalResultsType2/ablation/`
+  - `single_feature_{task}.csv` (raw ablation results)
+  - `feature_ranking_{task}.csv` (feature rankings with statistics)
+  - `selected_features_all.json` (classifier-specific feature selections)
+  - `greedy_trajectory_{model}_{task}_{classifier}.csv` (greedy selection trajectories)
+- **Result Type 1 & 2 (Individual Classifier Hard Labels)**: `results/FinalResultsType2/classifier_specific/`
+  - **Hard Labels**: `predictions/{classifier}_{task}_predictions.npy`
+  - **Probabilities**: `probabilities/{classifier}_{task}_probabilities.npy`
+  - **Metrics**: `metrics/ensemble_evaluation_metrics_{task}.json`
+- **Result Type 3 (Weighted Average Ensemble)**: `results/FinalResultsType2/classifier_specific/`
+  - **Hard Labels from Weighted Proba**: `predictions/ensemble_hard_labels_from_weighted_proba_{task}.npy`
+  - **Weighted Average Probabilities**: `probabilities/ensemble_weighted_average_probabilities_{task}.npy`
+  - **Ensemble Weights**: `metrics/ensemble_classifier_weights_{task}.json`
 
-**Total Results**: **12 classifier-task combinations** (6 classifiers × 2 tasks) + **2 ensemble results** (one per task)
+**Total Results**:
+- **Result Type 1 & 2**: **12 classifier-task combinations** (6 classifiers × 2 tasks)
+- **Result Type 3**: **2 ensemble results** (one per task)
+- **Total**: **14 distinct result sets** (12 individual + 2 ensemble)
+
+**Key Innovation**: This methodology uses **classifier-specific feature selection**, meaning each classifier gets features optimized for its own learning algorithm (e.g., RandomForest may prefer different features than LogisticRegression). The three result types allow comprehensive evaluation: individual classifier performance (Type 1 & 2) and ensemble performance (Type 3).
 
 ---
 
 ### Methodology 3: Early Fusion Baseline Evaluation
 
-**Notebook**: `06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb`  
-**Description**: Early fusion of all 60 features (18 model-independent + 42 model-dependent from 6 models) evaluated with all 6 classifiers. No feature selection - uses all 60 features.
+**Notebook**: `0_4_early_fusion.py`  
+**Description**: Early fusion of all 60 features (18 model-independent + 42 model-dependent from 6 models) evaluated with all 6 classifiers. No feature selection - uses all 60 features. Baseline for comparison with Methodology 2's feature selection approach.
 
 **Process**:
 
@@ -485,38 +554,36 @@ This repository implements three evaluation methodologies on the test set (held-
 - **Hierarchical Evasion → Clarity**: Maps evasion predictions to clarity labels
 - **Annotator-Based Clarity**: Evaluates against annotator1/2/3 clarity labels (mapped from evasion)
 
+**Key Innovation**: This methodology uses **early fusion** (feature-level concatenation) to combine information from all 6 models into a single 60-dimensional feature vector, allowing classifiers to learn cross-model patterns. Serves as baseline for comparison with Methodology 2's classifier-specific feature selection (40 features per classifier).
+
 ---
 
-## Methodology Comparison
+## 📊 Methodology Comparison
 
 | Methodology | Features | Feature Selection | Ensemble | Evaluation Set | Total Results |
 |------------|----------|------------------|----------|----------------|---------------|
 | **Method 1: Individual Model Baseline** | 25 per model | None | None | Test | 72 combinations (6 models × 6 classifiers × 2 tasks) |
-| **Method 2: Early Fusion with Feature Selection** | 40 per classifier | Greedy (global 20 + classifier-specific 20) | Weighted average | Test | 12 individual + 2 ensemble |
+| **Method 2: Ablation Study** | 40 per classifier | Greedy (global 20 + classifier-specific 20) | Weighted average (Result Type 3) | Test | 14 result sets (12 individual + 2 ensemble) |
 | **Method 3: Early Fusion Baseline** | 60 (early fusion) | None | None | Test | 12 combinations (6 classifiers × 2 tasks) |
 
-**Note**: Development set evaluation (`03_train_evaluate_on_dev_set_6_6_36.ipynb`) is a prerequisite step for Methodology 2, not a separate methodology. It evaluates 6 models × 6 classifiers × 2 tasks on the development set for model selection and feature selection guidance.
+**Note**: Development set evaluation (`03_train_evaluate.ipynb`) is a prerequisite step for Methodology 2, not a separate methodology. It evaluates 6 models × 6 classifiers × 2 tasks on the development set for model selection and feature selection guidance.
 
 ---
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 semeval-context-tree-modular/
-├── notebooks/              # Pipeline notebooks
+├── notebooks/              # Main pipeline notebooks
+│   ├── 00_setup.ipynb                    # Repository setup and Drive mount
 │   ├── 01_data_split.ipynb               # Dataset splitting (Train/Dev/Test)
 │   ├── 02_feature_extraction_separate.ipynb  # Feature extraction per model
-│   ├── 03_train_evaluate_on_dev_set_6_6_36.ipynb  # Dev set evaluation (for Methodology 2)
-│   ├── 03_train_evaluate_on_dev_set_6_6_36.py
-│   ├── 04_methodology_1__initial_evaluationon_test_set_1_6_6_36.ipynb  # Methodology 1
-│   ├── 04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py
-│   ├── 0_5_methodology_2_early_fusion_60_feature_6_classifier.ipynb  # Methodology 2
-│   ├── 0_5_methodology_2_early_fusion_60_feature_6_classifier.py
-│   └── 06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb  # Methodology 3
+│   ├── 03_train_evaluate.ipynb            # Prerequisite: Dev set evaluation (for Methodology 2)
+│   ├── 03_5_ablation_study.py             # Methodology 2: Ablation study with classifier-specific selection
+│   ├── 0_4_early_fusion.py               # Methodology 3: Early fusion baseline
+│   └── 05_final_evaluation.py             # Methodology 1: Individual model baseline
 ├── src/                    # Python source code
 │   ├── data/               # Dataset loading and splitting
-│   │   ├── loader.py
-│   │   └── splitter.py
 │   ├── features/           # Feature extraction and fusion
 │   │   ├── extraction.py  # 25 feature extraction functions
 │   │   ├── fusion.py       # Early fusion functions
@@ -524,27 +591,27 @@ semeval-context-tree-modular/
 │   ├── models/             # Model training and classifiers
 │   │   ├── classifiers.py # Classifier definitions
 │   │   ├── trainer.py     # Training functions
-│   │   ├── hierarchical.py # Evasion → Clarity mapping
-│   │   ├── ensemble.py    # Ensemble methods
-│   │   ├── inference.py   # Inference functions
-│   │   └── final_classification.py
+│   │   └── hierarchical.py # Evasion → Clarity mapping
 │   ├── evaluation/         # Metrics and visualization
 │   │   ├── metrics.py     # Metric computation
 │   │   ├── tables.py      # Results table generation
-│   │   ├── plots.py       # Plotting functions
-│   │   └── visualizer.py  # Visualization utilities
-│   ├── storage/            # Data storage management
-│   │   └── manager.py     # StorageManager class
-│   └── utils/              # Utility functions
-│       └── reproducibility.py
+│   │   └── visualizer.py  # Plotting functions
+│   └── storage/            # Data storage management
+│       └── manager.py     # StorageManager class
+├── scripts/                # Utility scripts
 └── metadata/               # Feature and result metadata
 ```
 
 ---
 
-## Pipeline Workflow
+## 🔄 Pipeline Workflow
 
-### 1. Data Splitting (`01_data_split.ipynb`)
+### 1. Setup (`00_setup.ipynb`)
+- Clone repository from GitHub
+- Mount Google Drive for persistent storage
+- Initialize StorageManager
+
+### 2. Data Splitting (`01_data_split.ipynb`)
 - Load QEvasion dataset from HuggingFace (`ailsntua/QEvasion`)
 - **Clarity Task**: Use all samples (no filtering)
 - **Evasion Task**: Apply majority voting (keep samples with ≥2/3 annotator agreement)
@@ -554,38 +621,30 @@ semeval-context-tree-modular/
 **Outputs**:
 - `splits/dataset_splits_{task}.pkl` (task-specific splits)
 
-### 2. Feature Extraction (`02_feature_extraction_separate.ipynb`)
+### 3. Feature Extraction (`02_feature_extraction_separate.ipynb`)
 Extract 25 Context Tree features for each transformer model separately.
 
 **Outputs**:
 - `features/raw/X_{split}_{model}_{task}.npy` (feature matrices)
 - `metadata/features_{split}_{model}_{task}.json` (feature metadata)
 
-### 3. Development Set Evaluation (`03_train_evaluate_on_dev_set_6_6_36.ipynb`) - Prerequisite for Methodology 2
-Train and evaluate on development set (for model selection and feature selection guidance). This is not a final evaluation but a prerequisite step.
+### 4. Development Set Evaluation (`03_train_evaluate.ipynb`) - Prerequisite for Methodology 2
+Train and evaluate on development set (for model selection and feature selection guidance). This is **not a final evaluation** but a prerequisite step.
 
 **Outputs**:
 - Predictions: `predictions/pred_dev_{model}_{classifier}_{task}.npy`
 - Probabilities: `features/probabilities/probs_dev_{model}_{classifier}_{task}.npy`
 - Results: `results/{model}_{task}_separate.json`
 
-### 4. Methodology 1 (`04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py`)
-Evaluate all model×classifier combinations on test set.
+### 5. Ablation Study (`03_5_ablation_study.py`) - Methodology 2
+Comprehensive feature ablation and classifier-specific feature selection with three result types.
 
 **Outputs**:
-- Test predictions: `results/FinalResultsType1/predictions/`
-- Test probabilities: `results/FinalResultsType1/probabilities/`
-- Final tables: `results/FinalResultsType1/tables/`
+- Ablation results: `results/FinalResultsType2/ablation/`
+- Individual classifier results (Type 1 & 2): `results/FinalResultsType2/classifier_specific/predictions/`
+- Weighted ensemble results (Type 3): `results/FinalResultsType2/classifier_specific/predictions/ensemble_*.npy`
 
-### 5. Methodology 2 (`0_5_methodology_2_early_fusion_60_feature_6_classifier.py`)
-Early fusion with classifier-specific feature selection.
-
-**Outputs**:
-- Predictions: `results/FinalResultsType2/predictions/`
-- Probabilities: `results/FinalResultsType2/probabilities/`
-- Ensemble results: `results/FinalResultsType2/predictions/ensemble_*.npy`
-
-### 6. Methodology 3 (`06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb`)
+### 6. Early Fusion (`0_4_early_fusion.py`) - Methodology 3
 Early fusion of 60 features evaluated with all classifiers.
 
 **Outputs**:
@@ -593,13 +652,35 @@ Early fusion of 60 features evaluated with all classifiers.
 - Predictions: `results/FinalResultsType3/predictions/`
 - Tables: `results/FinalResultsType3/tables/`
 
+### 7. Final Evaluation (`05_final_evaluation.py`) - Methodology 1
+Evaluate all model×classifier combinations on test set.
+
+**Outputs**:
+- Test predictions: `results/FinalResultsType1/predictions/`
+- Test probabilities: `results/FinalResultsType1/probabilities/`
+- Final tables: `results/FinalResultsType1/tables/`
+
 ---
 
-## Results and Storage Locations
+## 📁 Results and Storage Locations
 
-All results are stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
+**IMPORTANT: All experimental results, logs, predictions, checkpoints, models, features, plots, and analysis outputs are available in the following Google Drive folder:**
 
-### Methodology 1
+**Google Drive Results Folder**: https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing
+
+This folder contains:
+- **checkpoints**: Model checkpoints and saved model states
+- **features**: Extracted feature matrices and feature metadata
+- **models**: Trained model files
+- **paper**: Paper-related documents and drafts
+- **plots**: Visualization plots and figures
+- **predictions**: Prediction outputs for all methodologies
+- **results**: Comprehensive results tables, metrics, and evaluation outputs
+- **splits**: Dataset splits (train/dev/test) for both Clarity and Evasion tasks
+
+All results are also stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
+
+### Methodology 1 (Basic Evaluation)
 **Drive Path**: `results/FinalResultsType1/`
 - Predictions: `predictions/pred_test_{model}_{classifier}_{task}.npy`
 - Probabilities: `probabilities/probs_test_{model}_{classifier}_{task}.npy`
@@ -613,14 +694,23 @@ All results are stored in **Google Drive** at `/content/drive/MyDrive/semeval_da
 - Probabilities: `features/probabilities/probs_dev_{model}_{classifier}_{task}.npy`
 - Results: `results/{model}_{task}_separate.json`
 
-### Methodology 2
+### Methodology 2 (Ablation Study with Classifier-Specific Selection)
 **Drive Path**: `results/FinalResultsType2/`
-- Hard labels: `predictions/{classifier}_{task}_predictions.npy`
-- Probabilities: `probabilities/{classifier}_{task}_probabilities.npy`
-- Ensemble: `predictions/ensemble_hard_labels_from_weighted_proba_{task}.npy`
-- Metrics: `metrics/ensemble_evaluation_metrics_{task}.json`
+- **Ablation**: `ablation/`
+  - `single_feature_{task}.csv`
+  - `feature_ranking_{task}.csv`
+  - `selected_features_all.json`
+  - `greedy_trajectory_{model}_{task}_{classifier}.csv`
+- **Classifier-Specific**: `classifier_specific/`
+  - Hard labels: `predictions/{classifier}_{task}_predictions.npy`
+  - Probabilities: `probabilities/{classifier}_{task}_probabilities.npy`
+  - Metrics: `metrics/ensemble_evaluation_metrics_{task}.json`
+- **Ensemble**: `classifier_specific/`
+  - Hard labels: `predictions/ensemble_hard_labels_from_weighted_proba_{task}.npy`
+  - Probabilities: `probabilities/ensemble_weighted_average_probabilities_{task}.npy`
+  - Weights: `metrics/ensemble_classifier_weights_{task}.json`
 
-### Methodology 3
+### Methodology 3 (Early Fusion Baseline)
 **Drive Path**: `results/FinalResultsType3/`
 - Test features: `test/X_test_60feat_{task}.npy`
 - Predictions: `predictions/pred_test_{classifier}_{task}.npy`
@@ -634,7 +724,7 @@ All results are stored in **Google Drive** at `/content/drive/MyDrive/semeval_da
 
 ---
 
-## Core Modules
+## 🧩 Core Modules
 
 ### `src/storage/manager.py` - StorageManager
 Manages data storage: GitHub for metadata, Google Drive for large files.
@@ -680,87 +770,31 @@ Implements early fusion by concatenating features from multiple models.
 
 ---
 
-## Usage
+## 📝 Usage
 
-### Running the Complete Pipeline
+1. **Setup**: Run `00_setup.ipynb` to clone repository and mount Google Drive
+2. **Data Splitting**: Run `01_data_split.ipynb` to create train/dev/test splits
+3. **Feature Extraction**: Run `02_feature_extraction_separate.ipynb` to extract 25 features for each model
+4. **Development Evaluation**: Run `03_train_evaluate.ipynb` (prerequisite for Methodology 2) for dev set results
+5. **Ablation Study**: Run `03_5_ablation_study.py` (Methodology 2) for classifier-specific feature selection with three result types
+6. **Early Fusion**: Run `0_4_early_fusion.py` (Methodology 3) for 60-feature early fusion baseline
+7. **Final Evaluation**: Run `05_final_evaluation.py` (Methodology 1) for individual model baseline evaluation
 
-To reproduce all experiments, run the notebooks in the following order:
-
-1. **Data Splitting**: Run `01_data_split.ipynb` to create train/dev/test splits
-2. **Feature Extraction**: Run `02_feature_extraction_separate.ipynb` to extract 25 features for each model
-3. **Development Evaluation**: Run `03_train_evaluate_on_dev_set_6_6_36.ipynb` (prerequisite for Methodology 2) for dev set results
-4. **Methodology 1**: Run `04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py` for individual model baseline evaluation
-5. **Methodology 2**: Run `0_5_methodology_2_early_fusion_60_feature_6_classifier.py` for early fusion with classifier-specific feature selection
-6. **Methodology 3**: Run `06_methodology_3_and_4_ablation_and_ensemble_methodologies.ipynb` for 60-feature early fusion baseline
-
-### Running Individual Methodologies
-
-Each methodology can be run independently if the prerequisite steps are completed:
-
-- **Methodology 1**: Requires steps 1-2 (data splitting and feature extraction)
-- **Methodology 2**: Requires steps 1-3 (data splitting, feature extraction, and dev evaluation)
-- **Methodology 3**: Requires steps 1-2 (data splitting and feature extraction)
-
-### Command Line Execution
-
-For Python scripts (`.py` files), you can run them directly:
-
-```bash
-# From the notebooks directory
-python 04_methodology_1__initial_evaluationon_test_set_1_6_6_36.py
-python 0_5_methodology_2_early_fusion_60_feature_6_classifier.py
-```
-
-**CRITICAL**: Test set is **ONLY** accessed in final evaluation notebooks (Methodologies 1, 2, and 3). Do not access test set in development notebooks.
+**⚠️ CRITICAL**: Test set is **ONLY** accessed in final evaluation notebooks (Methodologies 1, 2, and 3). Do not access test set in development notebooks.
 
 ---
 
-## Requirements
+## ⚙️ Requirements
 
-### System Requirements
-- Python 3.8 or higher
-- CUDA-capable GPU (recommended for transformer models)
-- Minimum 16GB RAM (32GB recommended)
-- Google Colab Pro or local machine with sufficient resources
+- Python 3.8+
+- PyTorch (with CUDA support recommended)
+- Transformers (HuggingFace)
+- scikit-learn
+- pandas, numpy
+- XGBoost, LightGBM
+- Google Colab (for Drive integration) or local setup with Google Drive API
 
-### Python Packages
-
-Install all dependencies using:
-
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-pip install transformers datasets scikit-learn pandas numpy xgboost lightgbm tqdm matplotlib seaborn
-```
-
-Or create a `requirements.txt` file with:
-
-```
-torch>=1.12.0
-torchvision>=0.13.0
-torchaudio>=0.12.0
-transformers>=4.20.0
-datasets>=2.0.0
-scikit-learn>=1.0.0
-pandas>=1.3.0
-numpy>=1.21.0
-xgboost>=1.6.0
-lightgbm>=3.3.0
-tqdm>=4.64.0
-matplotlib>=3.5.0
-seaborn>=0.12.0
-```
-
-### Google Colab Setup
-
-If using Google Colab, each notebook includes setup cells that:
-1. Clone the repository
-2. Mount Google Drive
-3. Install required packages
-4. Configure paths
-
-Simply run the setup cells at the beginning of each notebook.
-
-## Key Features
+## 🔑 Key Features
 
 1. **Task-Specific Splits**: Clarity and Evasion have different splits (Evasion is filtered by majority voting)
 2. **Test Set Isolation**: Test set is only accessed in final evaluation (prevents data leakage)
@@ -776,13 +810,13 @@ Simply run the setup cells at the beginning of each notebook.
 
 ---
 
-## License
+## 📄 License
 
 See LICENSE file for details.
 
 ---
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - SemEval-2024 Task 1 organizers
 - QEvasion dataset creators
