@@ -16,22 +16,6 @@ A comprehensive machine learning pipeline for detecting question-answer evasion 
 
 ---
 
-## 📊 Experimental Logs and Results
-
-**All experimental logs, detailed results, predictions, and analysis outputs are available on Google Drive:**
-
-🔗 **[Access Logs and Results on Google Drive](https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing)**
-
-This folder contains:
-- Complete experimental logs from all methodologies
-- Detailed evaluation results and metrics
-- Prediction files and probability distributions
-- Visualization plots and analysis outputs
-- Ablation study results and feature rankings
-- Ensemble evaluation metrics
-
----
-
 ## 📋 Overview
 
 This project implements a comprehensive pipeline for **SemEval-2024 Task 1: Question-Answer Evasion Detection**. The pipeline extracts **25 Context Tree features** from question-answer pairs using six transformer models and performs classification on two main tasks:
@@ -680,7 +664,21 @@ Evaluate all model×classifier combinations on test set.
 
 ## 📁 Results and Storage Locations
 
-All results are stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
+**IMPORTANT: All experimental results, logs, predictions, checkpoints, models, features, plots, and analysis outputs are available in the following Google Drive folder:**
+
+**Google Drive Results Folder**: https://drive.google.com/drive/folders/1P2ugCvV6LStQX5FZ_gQBKVN07L4_lizb?usp=sharing
+
+This folder contains:
+- **checkpoints**: Model checkpoints and saved model states
+- **features**: Extracted feature matrices and feature metadata
+- **models**: Trained model files
+- **paper**: Paper-related documents and drafts
+- **plots**: Visualization plots and figures
+- **predictions**: Prediction outputs for all methodologies
+- **results**: Comprehensive results tables, metrics, and evaluation outputs
+- **splits**: Dataset splits (train/dev/test) for both Clarity and Evasion tasks
+
+All results are also stored in **Google Drive** at `/content/drive/MyDrive/semeval_data/` (when running in Colab).
 
 ### Methodology 1 (Basic Evaluation)
 **Drive Path**: `results/FinalResultsType1/`
